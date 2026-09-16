@@ -15,5 +15,12 @@ mulat-verify-*/
 .env
 .env.local
 
+# Command Code. The project skill in .commandcode/skills/ is team-shared and IS
+# committed. Personal taste and the generated permission allowlist are not: an
+# allowlist would widen what someone else's agent may run.
+.commandcode/taste/
+.commandcode/settings.json
+.commandcode/settings.local.json
+
 # Generated synthetic fixtures (regenerate with `npm run fixture:generate`)
 fixtures/sample/
