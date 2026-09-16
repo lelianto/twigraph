@@ -1,39 +1,119 @@
-# mulat
+<div align="center">
+  <img src="assets/mulat-logo.png" alt="mulat logo" width="168" />
 
-**Ask deep questions about your own files without uploading them to the cloud.**
+  # mulat
 
-mulat is a local-first, privacy-first search assistant for your laptop. It indexes the
-folders you choose and answers questions using only those documents, with a citation for
-every claim. By default, your files never leave your device.
+  **Ask your files. Keep your files.**
 
-> Status: early MVP. All indexing, search and answering happens locally. Full documentation
-> lands with the first release — see `docs/ARCHITECTURE.md`, `THREAT_MODEL.md` and
-> `CONTRIBUTING.md` for what exists today.
+  A privacy-first, local-first RAG engine for answers grounded in your own documents.
+</div>
 
-## Privacy in one paragraph
+---
 
-There is no account, no cloud database, and no telemetry. The only network request the
-application can make is the one-time download of the local embedding model, and only when
-you explicitly ask for it. If you never prepare a model, mulat still works: it falls back
-to BM25 lexical retrieval. Set `MULAT_OFFLINE=1` and every network path is disabled,
-loopback included. The test suite enforces all of this rather than trusting it.
+## Why mulat?
 
-## Supported file types
+Your private documents should not have to leave your computer before they become useful.
+mulat is being built to index folders you choose, retrieve the most relevant passages,
+and answer with citations that lead back to the source.
 
-| Format | Text | Page numbers | Headings |
-| --- | --- | --- | --- |
-| `.pdf` | text-layer PDFs only (no OCR) | yes | best effort |
-| `.docx` | yes | — | yes |
-| `.txt` | yes | — | — |
-| `.md` | yes | — | yes |
-| `.html` | yes | — | yes |
+The project is guided by three promises:
+
+- **Local by default.** Documents, indexes, and retrieval stay on the device.
+- **Grounded or silent.** An answer must be supported by retrieved text; uncertainty is a
+  valid result.
+- **Private by design.** No account, cloud database, or telemetry is required.
+
+## Project status
+
+> [!IMPORTANT]
+> mulat is an early-stage foundation, not yet an end-user application.
+
+The repository currently contains the shared contracts and safety primitives that the
+future ingestion, indexing, retrieval, and application layers will build on. Implemented
+today:
+
+- typed contracts for documents, answers, providers, and stores;
+- citation mapping and grounded-answer validation;
+- deterministic configuration and folder handling;
+- network guards for offline and local-provider modes;
+- automated tests with enforced coverage thresholds.
+
+Document parsers, search indexes, embedding support, a CLI, and a desktop interface remain
+on the roadmap. Keeping that distinction explicit is part of the project's commitment to
+source-grounded claims—including claims about itself.
+
+## Design principles
+
+| Principle | What it means in practice |
+| --- | --- |
+| Local-first | Core search remains useful without a network connection. |
+| Evidence-first | Citations come from retrieved chunks, never from model invention. |
+| Deterministic | Identical inputs produce identical artifacts and ordering. |
+| Deletable | Every persisted index must have a complete, tested removal path. |
+| Incremental | The architecture grows through small, independently verified packages. |
+
+## Architecture direction
+
+```text
+chosen folders
+      │
+      ▼
+document parsers ──► structured blocks ──► chunks
+                                              │
+                              ┌───────────────┴───────────────┐
+                              ▼                               ▼
+                         BM25 index                    local embeddings
+                              └───────────────┬───────────────┘
+                                              ▼
+                                      ranked retrieval
+                                              │
+                                              ▼
+                                grounded answer + citations
+```
+
+BM25 is the offline baseline. Local embeddings will be optional, and any future language
+model integration must sit behind the same grounding and citation checks.
 
 ## Development
 
+### Requirements
+
+- Node.js 22.13 or newer
+- npm
+
+### Get started
+
 ```bash
+git clone https://github.com/lelianto/mulat.git
+cd mulat
 npm install
-npm run verify                # typecheck + lint + tests with coverage gates
-npm run test:watch            # TDD inner loop
+npm run verify
 ```
 
-See `CONTRIBUTING.md` for the workflow, and `AGENTS.md` for the rules this repository runs on.
+Useful commands:
+
+| Command | Purpose |
+| --- | --- |
+| `npm run verify` | Run type checking, linting, and the coverage-gated test suite. |
+| `npm run test:watch` | Run the fast TDD feedback loop. |
+| `npm run format:check` | Check repository formatting without modifying files. |
+| `npm run format` | Format the repository with Prettier. |
+
+## Repository layout
+
+```text
+packages/shared/   Shared contracts, configuration, citations, and grounding
+tests/setup/       Determinism and no-network safeguards
+tests/smoke/       Cross-cutting behavior checks
+assets/            Project branding
+```
+
+## Contributing
+
+The project follows strict test-first development. Read [`AGENTS.md`](AGENTS.md) before
+changing production code; it documents the privacy, determinism, testing, and fixture
+rules that keep mulat honest.
+
+## License
+
+Licensed under the [Apache License 2.0](LICENSE).

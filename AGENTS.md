@@ -4,8 +4,8 @@ mulat is a privacy-first, local-first RAG application. It answers questions abou
 user's own files without uploading them anywhere. You are working on the product itself,
 not on a machine that happens to run it.
 
-Read `docs/ARCHITECTURE.md` for how the pieces fit together, and the `local-rag` skill at
-`.commandcode/skills/local-rag/SKILL.md` for the technical rules of the RAG pipeline.
+Read the `local-rag` skill at `.commandcode/skills/local-rag/SKILL.md` for the technical
+rules of the RAG pipeline.
 
 ## Always prioritize
 
@@ -45,9 +45,6 @@ Read `docs/ARCHITECTURE.md` for how the pieces fit together, and the `local-rag`
 | `npm run verify` | typecheck + lint + tests with coverage gates. This is the definition of green. |
 | `npm run test:watch` | the TDD inner loop |
 | `npm test` | full suite with coverage |
-| `npm run cli -- <args>` | run the headless CLI |
-| `npm run verify:real` | index `Documents` + `Desktop` into a throwaway temp directory and assert the invariants |
-| `npm run dev:desktop` | run the Electron app |
 
 ## Working rules
 
