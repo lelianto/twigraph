@@ -1,0 +1,15 @@
+{
+  "name": "@mulat/document-ingestion",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Folder scanning and parsers that turn a document into format-agnostic blocks.",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@mulat/shared": "0.1.0"
+  }
+}

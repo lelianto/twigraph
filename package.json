@@ -19,6 +19,8 @@
     "format:check": "prettier --check .",
     "test": "vitest run --coverage",
     "test:watch": "vitest",
+    "fixture:generate": "node fixtures/generate.mjs",
+    "mulat": "tsx apps/cli/src/main.ts",
     "verify": "npm run typecheck && npm run lint && npm run test"
   },
   "devDependencies": {
@@ -27,6 +29,7 @@
     "@vitest/coverage-v8": "^5.0.1",
     "eslint": "^9.39.1",
     "prettier": "^3.6.2",
+    "tsx": "^4.23.13",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.47.1",
     "vitest": "^5.0.1"

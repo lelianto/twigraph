@@ -189,7 +189,32 @@ describe('loadConfig', () => {
       await saveConfig(path, defaultConfig())
 
       const { readdir } = await import('node:fs/promises')
-      expect(await readdir(dir)).toEqual(['config.json'])
+      // The marker is what claims the directory as mulat's, so that a later
+      // "delete everything" has something to check before it touches anything.
+      expect(await readdir(dir)).toEqual(['.mulat-data', 'config.json'])
+    })
+  })
+
+  it('claims the data directory when it writes a config into it', async () => {
+    await withTempDir(async (dir) => {
+      const path = join(dir, 'config.json')
+      await saveConfig(path, defaultConfig())
+
+      const { isMulatDataDirectory } = await import('../src/data-dir')
+      expect(await isMulatDataDirectory(dir)).toBe(true)
+    })
+  })
+
+  it('creates the data directory it is asked to write into', async () => {
+    await withTempDir(async (dir) => {
+      // First run: nothing has been created yet, and the caller should not have to know
+      // that the first write is also the one that brings the directory into being.
+      const path = join(dir, 'mulat', 'config.json')
+      const config = defaultConfig({ offline: true })
+
+      await saveConfig(path, config)
+
+      await expect(loadConfig(path)).resolves.toEqual(config)
     })
   })
 })

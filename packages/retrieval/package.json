@@ -1,0 +1,18 @@
+{
+  "name": "@mulat/retrieval",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "BM25 retrieval that works with no model, no download and no network.",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@mulat/shared": "0.1.0"
+  },
+  "devDependencies": {
+    "@mulat/indexing": "0.2.0"
+  }
+}

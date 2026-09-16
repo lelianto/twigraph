@@ -4,8 +4,10 @@ mulat is a privacy-first, local-first RAG application. It answers questions abou
 user's own files without uploading them anywhere. You are working on the product itself,
 not on a machine that happens to run it.
 
-Read the `local-rag` skill at `.commandcode/skills/local-rag/SKILL.md` for the technical
-rules of the RAG pipeline.
+Read `docs/ARCHITECTURE.md` for the implemented package and storage design, and the
+`local-rag` skill at `.commandcode/skills/local-rag/SKILL.md` for the technical rules of
+the RAG pipeline. Treat sections explicitly marked as planned as requirements, not as
+implemented behavior.
 
 ## Always prioritize
 
@@ -35,6 +37,7 @@ rules of the RAG pipeline.
 
 - run tests;
 - run lint and type checks;
+- run `npm run format:check`;
 - update documentation;
 - report limitations honestly.
 
@@ -45,6 +48,12 @@ rules of the RAG pipeline.
 | `npm run verify` | typecheck + lint + tests with coverage gates. This is the definition of green. |
 | `npm run test:watch` | the TDD inner loop |
 | `npm test` | full suite with coverage |
+| `npm run mulat -- <args>` | run the CLI from source, e.g. `npm run mulat -- status` |
+| `npm run fixture:generate` | rewrite the synthetic fixtures under `fixtures/sample/` |
+| `npm run format:check` | verify formatting without changing files |
+
+If the shell sets `NODE_ENV=production`, npm omits dev dependencies and installs neither the
+test runner nor the type checker. Install with `npm install --include=dev`.
 
 ## Working rules
 
@@ -58,3 +67,13 @@ rules of the RAG pipeline.
 - **Coverage gates are enforced:** ≥90% lines and ≥85% branches across the engine packages.
 - **Deleting user data is a first-class feature.** Any code path that writes an index must
   have a tested path that removes it completely.
+- **Deletion is fail-safe.** Never recursively remove a user-supplied data-directory path.
+  Require the mulat marker, remove only named mulat artifacts, and preserve a directory
+  that still contains anything else. Test filesystem roots, the home directory, project
+  roots, arbitrary unowned directories, and user files inside an owned directory.
+- **The marker is not a security boundary.** A first write currently marks its target
+  directory as mulat-owned. Do not point `MULAT_DATA_DIR` at a non-empty personal folder,
+  and do not describe the marker as proof that every named artifact was created by mulat.
+- **Keep commits dependency-ordered.** Shared contracts and data-directory primitives land
+  before ingestion, indexing, retrieval, and CLI consumers. Every intermediate commit
+  must remain installable and pass `npm run verify`.

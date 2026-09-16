@@ -1,5 +1,7 @@
 import { readFile, rename, writeFile } from 'node:fs/promises'
+import { dirname } from 'node:path'
 import type { FolderRecord } from './contracts/stores'
+import { ensureDataDirectory } from './data-dir'
 import { MulatError } from './errors'
 
 export const CONFIG_VERSION = 1
@@ -311,9 +313,17 @@ export async function loadConfig(configPath: string): Promise<MulatConfig> {
   return parseConfig(parsed)
 }
 
-/** Atomic: a torn write must never leave an unreadable config behind. */
+/**
+ * Atomic: a torn write must never leave an unreadable config behind.
+ *
+ * It also brings the data directory into being, marker and all. The first run of a fresh
+ * install has no directory yet, and making every caller responsible for creating it means
+ * every caller can forget. Writing here is also what claims the directory as mulat's, so
+ * that a later "delete everything" knows what it is allowed to touch.
+ */
 export async function saveConfig(configPath: string, config: MulatConfig): Promise<void> {
   const temporaryPath = `${configPath}.tmp`
+  await ensureDataDirectory(dirname(configPath))
   await writeFile(temporaryPath, `${JSON.stringify(config, null, 2)}\n`, 'utf8')
   await rename(temporaryPath, configPath)
 }

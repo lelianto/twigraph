@@ -54,6 +54,20 @@ export {
   formatPageRange,
 } from './citations'
 export { canonicalFolderPath, folderIdFor } from './folders'
+export { createFolderRegistry } from './folder-registry'
+
+export {
+  DATA_ARTIFACTS,
+  DATA_MARKER_APPLICATION,
+  DATA_MARKER_FILE,
+  DATA_MARKER_VERSION,
+  dataMarkerPath,
+  deleteDataDirectory,
+  ensureDataDirectory,
+  isMulatDataDirectory,
+  readDataMarker,
+} from './data-dir'
+export type { DataDeletion, DataMarker } from './data-dir'
 
 export { CONFIG_VERSION, defaultConfig, loadConfig, parseConfig, saveConfig } from './config'
 export type {
