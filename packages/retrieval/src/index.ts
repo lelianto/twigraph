@@ -5,3 +5,4 @@ export { createRetriever, meetsConfidence } from './search'
 export type { RetrieverOptions, SearchCorpus } from './search'
 
 export { tokenize } from './tokenize'
+export { createExtractiveAnswerEngine } from './extractive'
