@@ -3,7 +3,13 @@ import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
   {
-    ignores: ['**/node_modules/**', '**/dist/**', '**/coverage/**', 'fixtures/sample/**'],
+    ignores: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/coverage/**',
+      'fixtures/sample/**',
+      'build/**',
+    ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
@@ -32,6 +38,18 @@ export default tseslint.config(
         TextEncoder: 'readonly',
         TextDecoder: 'readonly',
       },
+    },
+  },
+  {
+    // The Electron probe is loaded directly by Electron's own CommonJS loader, so `require` is
+    // the only way it can reach the electron module. It is not part of any bundle.
+    files: ['apps/desktop/tests/harness/**/*.cjs'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: { require: 'readonly', setTimeout: 'readonly' },
+    },
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
     },
   },
 )

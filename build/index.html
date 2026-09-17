@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="twigraph is a privacy-first local document search engine. Index your own files, search offline, and keep every result grounded in a source."
+    />
+    <meta name="theme-color" content="#07110d" />
+    <meta property="og:title" content="twigraph — Ask your files. Keep your files." />
+    <meta
+      property="og:description"
+      content="Private, local document search with source-grounded results. No account, cloud database, or telemetry required."
+    />
+    <title>twigraph — Private local document search</title>
+    <link rel="icon" href="assets/twigraph-logo.png" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header" data-header>
+      <nav class="nav shell" aria-label="Main navigation">
+        <a class="brand" href="#top" aria-label="twigraph home">
+          <img src="assets/twigraph-logo.png" alt="" width="38" height="38" />
+          <span>twigraph</span>
+        </a>
+        <div class="nav-links" id="nav-links">
+          <a href="#principles">Principles</a>
+          <a href="#workflow">How it works</a>
+          <a href="#mcp">MCP</a>
+          <a href="#roadmap">Roadmap</a>
+        </div>
+        <a class="button button-small button-ghost" href="https://github.com/lelianto/twigraph">
+          View on GitHub
+          <span aria-hidden="true">↗</span>
+        </a>
+        <button
+          class="menu-button"
+          type="button"
+          aria-expanded="false"
+          aria-controls="nav-links"
+          aria-label="Open navigation"
+          data-menu-button
+        >
+          <span></span><span></span>
+        </button>
+      </nav>
+    </header>
+
+    <main id="main">
+      <section class="hero shell" id="top">
+        <div class="hero-copy reveal">
+          <div class="eyebrow"><span class="pulse"></span> Local-first document search</div>
+          <h1>Ask your files.<br /><em>Keep your files.</em></h1>
+          <p class="hero-lede">
+            twigraph indexes folders you choose and finds the passages that matter—without
+            uploading your documents, requiring an account, or quietly phoning home.
+          </p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#quickstart">Try the CLI <span>→</span></a>
+            <a class="button button-secondary" href="https://github.com/lelianto/twigraph"
+              >Explore the source <span>↗</span></a
+            >
+          </div>
+          <div class="trust-line" aria-label="Product guarantees">
+            <span>Offline search</span>
+            <span>No telemetry</span>
+            <span>Apache-2.0</span>
+          </div>
+        </div>
+
+        <div class="search-demo reveal" aria-label="Example twigraph search result">
+          <div class="window-bar">
+            <div class="window-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+            <span>local search</span>
+            <span class="offline-badge"><i></i> offline</span>
+          </div>
+          <div class="command-line">
+            <span class="prompt">›</span>
+            <span>twigraph search</span>
+            <strong>"reciprocal rank fusion"</strong>
+          </div>
+          <div class="result-meta">
+            <span>1 result</span><span>lexical</span><span>7 ms</span>
+          </div>
+          <article class="search-result">
+            <div class="score">0.80</div>
+            <div>
+              <div class="file-row">
+                <strong>retrieval.md</strong>
+                <span>§ Retrieval › Fusion</span>
+              </div>
+              <p>
+                Rank lists are combined with reciprocal rank fusion: each retriever contributes
+                1 / (k + rank); k is 60; raw scores are never added together.
+              </p>
+            </div>
+          </article>
+          <div class="source-anchor">
+            <span>01</span>
+            <div></div>
+            <p>Every result points back to an exact source.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="proof-strip" aria-label="Current project status">
+        <div class="shell proof-grid">
+          <div><strong>318</strong><span>tests passing</span></div>
+          <div><strong>0</strong><span>network calls</span></div>
+          <div><strong>95.89%</strong><span>line coverage</span></div>
+          <div><strong>3</strong><span>read-only MCP tools</span></div>
+        </div>
+      </section>
+
+      <section class="section shell" id="principles">
+        <div class="section-heading reveal">
+          <div class="kicker">The contract</div>
+          <h2>Useful by design.<br />Private by default.</h2>
+          <p>
+            Privacy is not a setting buried in a menu. It shapes the storage model, retrieval
+            pipeline, tests, and every feature twigraph is allowed to ship.
+          </p>
+        </div>
+        <div class="principle-grid">
+          <article class="principle-card reveal">
+            <span class="card-index">01</span>
+            <div class="card-icon shield-icon" aria-hidden="true"></div>
+            <h3>Your files stay here</h3>
+            <p>Documents, indexes, and search stay on your device. No account or cloud database.</p>
+            <div class="card-rule"><span></span>Local by default</div>
+          </article>
+          <article class="principle-card reveal">
+            <span class="card-index">02</span>
+            <div class="card-icon quote-icon" aria-hidden="true">“</div>
+            <h3>Grounded or silent</h3>
+            <p>Results carry exact source text. Weak retrieval is surfaced as uncertainty—not a guess.</p>
+            <div class="card-rule"><span></span>Evidence first</div>
+          </article>
+          <article class="principle-card reveal">
+            <span class="card-index">03</span>
+            <div class="card-icon delete-icon" aria-hidden="true">×</div>
+            <h3>Deletable completely</h3>
+            <p>Every stored index has a tested removal path that preserves unrelated user files.</p>
+            <div class="card-rule"><span></span>User controlled</div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section workflow-section" id="workflow">
+        <div class="shell">
+          <div class="section-heading centered reveal">
+            <div class="kicker">Under the hood</div>
+            <h2>From folder to evidence<br />in four local steps.</h2>
+          </div>
+          <div class="workflow-grid">
+            <article class="workflow-step reveal">
+              <span>01</span>
+              <div class="workflow-symbol folder-symbol" aria-hidden="true"></div>
+              <h3>Choose folders</h3>
+              <p>You decide which local directories enter the searchable collection.</p>
+            </article>
+            <article class="workflow-step reveal">
+              <span>02</span>
+              <div class="workflow-symbol blocks-symbol" aria-hidden="true"><i></i><i></i><i></i></div>
+              <h3>Build the index</h3>
+              <p>Documents become deterministic, structure-aware chunks on your device.</p>
+            </article>
+            <article class="workflow-step reveal">
+              <span>03</span>
+              <div class="workflow-symbol search-symbol" aria-hidden="true"></div>
+              <h3>Search offline</h3>
+              <p>BM25 ranks matching passages without a model, API key, or network.</p>
+            </article>
+            <article class="workflow-step reveal">
+              <span>04</span>
+              <div class="workflow-symbol citation-symbol" aria-hidden="true">[1]</div>
+              <h3>Trace the source</h3>
+              <p>Every hit includes its file path, section context, excerpt, and chunk ID.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section shell mcp-section" id="mcp">
+        <div class="mcp-copy reveal">
+          <div class="kicker">Built for your agents</div>
+          <h2>Local context,<br />on demand.</h2>
+          <p>
+            Connect Codex, OpenCode, CommandCode, or another MCP client to the same index. Your AI
+            gets the few relevant passages—not a dump of your entire folder.
+          </p>
+          <ul class="check-list">
+            <li><span>✓</span>Read-only tools</li>
+            <li><span>✓</span>Structured citations</li>
+            <li><span>✓</span>Zero listening ports</li>
+          </ul>
+          <a class="text-link" href="https://github.com/lelianto/twigraph#local-mcp-server"
+            >MCP setup guide <span>→</span></a
+          >
+        </div>
+        <div class="mcp-console reveal">
+          <div class="console-label">MCP tool call</div>
+          <pre><code><span class="code-muted">{</span>
+  <span class="code-key">"tool"</span>: <span class="code-string">"twigraph_search"</span>,
+  <span class="code-key">"arguments"</span>: <span class="code-muted">{</span>
+    <span class="code-key">"query"</span>: <span class="code-string">"atomic index writes"</span>,
+    <span class="code-key">"topK"</span>: <span class="code-number">3</span>
+  <span class="code-muted">}</span>
+<span class="code-muted">}</span></code></pre>
+          <div class="console-response">
+            <div><span class="status-dot"></span> grounded result</div>
+            <span>storage.md · § Storage</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section roadmap-section" id="roadmap">
+        <div class="shell roadmap-layout">
+          <div class="section-heading reveal">
+            <div class="kicker">Honest progress</div>
+            <h2>Small vertical slices.<br />No imaginary features.</h2>
+            <p>
+              twigraph is an early CLI preview. The foundation works today; richer formats,
+              semantic retrieval, and a desktop interface come next.
+            </p>
+          </div>
+          <div class="roadmap-list reveal">
+            <div class="roadmap-item is-ready">
+              <span>Ready now</span>
+              <strong>TXT & Markdown indexing</strong>
+              <i>✓</i>
+            </div>
+            <div class="roadmap-item is-ready">
+              <span>Ready now</span>
+              <strong>Offline BM25 search + citations</strong>
+              <i>✓</i>
+            </div>
+            <div class="roadmap-item is-ready">
+              <span>Ready now</span>
+              <strong>Local MCP server</strong>
+              <i>✓</i>
+            </div>
+            <div class="roadmap-item">
+              <span>Next</span>
+              <strong>PDF, DOCX & HTML support</strong>
+              <i>→</i>
+            </div>
+            <div class="roadmap-item">
+              <span>Planned</span>
+              <strong>Local semantic search & desktop UI</strong>
+              <i>·</i>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section quickstart-section shell" id="quickstart">
+        <div class="quickstart-panel reveal">
+          <div>
+            <div class="kicker">Run it locally</div>
+            <h2>Your documents are already home.<br />Keep them there.</h2>
+          </div>
+          <div class="install-block">
+            <div class="install-label"><span>PowerShell</span><button type="button" data-copy>Copy</button></div>
+            <pre><code data-command>npm install --include=dev
+npm run twigraph -- folder add "C:\Your\Documents"
+npm run twigraph -- index --all
+npm run twigraph -- search "your question"</code></pre>
+          </div>
+          <div class="quickstart-actions">
+            <a class="button button-primary" href="https://github.com/lelianto/twigraph"
+              >Get twigraph on GitHub <span>↗</span></a
+            >
+            <span>Requires Node.js 22.13+</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="shell footer-row">
+        <a class="brand" href="#top"><img src="assets/twigraph-logo.png" alt="" width="34" height="34" /><span>twigraph</span></a>
+        <p>Ask your files. Keep your files.</p>
+        <div class="footer-links">
+          <a href="https://github.com/lelianto/twigraph">GitHub</a>
+          <a href="https://github.com/lelianto/twigraph/blob/main/LICENSE">Apache-2.0</a>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
