@@ -49,8 +49,17 @@ implemented behavior.
 | `npm run test:watch` | the TDD inner loop |
 | `npm test` | full suite with coverage |
 | `npm run twigraph -- <args>` | run the CLI from source, e.g. `npm run twigraph -- status` |
+| `npm run desktop` | build and start the Windows desktop app from a checkout |
+| `npm run build:desktop` | build the desktop main, preload and page bundles |
 | `npm run fixture:generate` | rewrite the synthetic fixtures under `fixtures/sample/` |
 | `npm run format:check` | verify formatting without changing files |
+
+The Electron smoke test is opt-in because it launches a browser engine. It builds nothing itself:
+
+```powershell
+npm run build:desktop
+$env:TWIGRAPH_DESKTOP_SMOKE='1'; npx vitest run apps/desktop/tests/desktop.smoke.test.ts --no-coverage
+```
 
 If the shell sets `NODE_ENV=production`, npm omits dev dependencies and installs neither the
 test runner nor the type checker. Install with `npm install --include=dev`.
@@ -62,6 +71,13 @@ test runner nor the type checker. Install with `npm install --include=dev`.
 - **Never mock our own logic.** Only I/O boundaries (fs, HTTP, Electron APIs) and the
   embedding model may be stubbed. Retrieval math, chunking and citation mapping are
   tested for real.
+- **The renderer holds no power.** `apps/desktop` keeps every decision in `main/service.ts`,
+  which imports nothing from Electron, and keeps the tests on it. The page runs sandboxed with
+  `connect-src 'none'`, so it may not import a Node built-in, may not import `electron`, and may
+  not import `@twigraph/shared` by its root path — only the `/ipc` and `/citations` subpaths,
+  because the root reaches for `node:fs`. `apps/desktop/tests/security.test.ts` enforces this.
+  Do not add a generic `invoke(channel, …)` to the preload, and do not let the renderer name a
+  path for the shell to open without the service checking it is an indexed document.
 - **Keep the engine deterministic.** No `Date.now()`, no randomness, no locale-dependent
   sorting inside artifacts. Pass a clock in if you need one.
 - **Coverage gates are enforced:** ≥90% lines and ≥85% branches across the engine packages.

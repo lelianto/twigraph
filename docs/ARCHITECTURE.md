@@ -16,6 +16,7 @@ packages/indexing            Block[] -> ChunkRecord[] -> on-disk index
 packages/retrieval           query -> ranked hits -> SearchResult
 apps/cli                     the headless product
 apps/mcp                     read-only stdio adapter over the same local index
+apps/desktop                 an Electron window over the same engine and the same index
 ```
 
 Dependencies point one way only: `shared` is imported by everything and imports nothing
@@ -154,6 +155,13 @@ a staging directory, which is discarded, not read.
 The consequence is that a search running against a live index either sees the whole old
 index or the whole new one, never a mixture.
 
+A run can be cancelled. Cancellation is cooperative and checked at every file boundary, so a
+cancelled run stops between documents rather than in the middle of one. The staging directory is
+created only inside `replaceIndex`, so throwing before it is reached is what guarantees that a
+cancelled run leaves the previous index exactly as it was — a half-built index would be worse
+than the one the user already had. The scan happens before the first boundary, so cancelling
+during the scan of a very large folder is honoured once that scan finishes.
+
 ## Deleting
 
 Deletion is a first-class feature, not an afterthought, and every write path has a tested
@@ -256,21 +264,73 @@ Vector search is exact (brute force) for now. The memory cost is
 
 ## Citations and the confidence gate
 
-Search currently returns ranked, cited chunks and applies the configured minimum score.
-The `ask` path described below is planned and is not exposed by the CLI yet.
+Search returns ranked, cited chunks and applies the configured minimum score. The `ask` path is
+implemented: it ranks, applies the same gate, and only then asks the extractive engine for an
+answer, so the gate runs **before** anything can produce text.
 
 A citation is `{ marker, chunkId, filename, absolutePath, page?, pageEnd?, headingPath,
 excerpt }`, derived from the chunk and never invented by a model.
 
-The confidence gate is already applied to search. A weak query is refused while retaining
-the ranked-source context needed for inspection. Once an answer provider exists, the same
-gate must run **before** it is called.
+The confidence gate is applied to search and to ask alike. A weak query is refused while
+retaining the ranked-source context needed for inspection.
 
 The shared grounding primitive already enforces that extractive passages are verbatim
-substrings of retrieved chunks. The future `ask` implementation must route every answer
-through it. A future model-generated answer is validated differently: every `[n]` marker
+substrings of retrieved chunks, and the extractive engine routes every answer through it. A
+future model-generated answer would be validated differently: every `[n]` marker
 must map to a chunk that was actually sent as context; invalid markers are dropped and
 reported, never displayed as if they were real.
+
+## Desktop app
+
+`apps/desktop` is a second client over the same engine, not a second product. It parses nothing,
+stores nothing and ranks nothing of its own: it builds the same `FolderRegistry` and `IndexStore`
+the CLI does, resolves the data directory with the same `resolveDataDir`, and therefore reads an
+index the CLI built. `TWIGRAPH_DATA_DIR` moves both at once, and a folder indexed at the command
+line is searchable in the window without copying anything.
+
+```
+apps/desktop/src/main        service.ts (every channel), ipc.ts (the boundary), main.ts (Electron)
+apps/desktop/src/preload     api.ts: the object contextBridge exposes as window.twigraph
+apps/desktop/src/renderer    the page, and view-model.ts for everything it says
+```
+
+Four rules hold across the split:
+
+1. **`service.ts` imports nothing from Electron.** The folder picker and the two shell calls
+   arrive as parameters. That is what lets the whole desktop surface — every channel, every
+   refusal, cancellation, and the refusal to open a file outside an index — be tested without
+   launching a window.
+2. **Exactly one place turns a throw into a value.** Handlers return `{ ok: true, value }` or
+   `{ ok: false, error: WireError }`, so the renderer never sees a stack. `ipc.ts` also checks
+   the shape of its arguments first, so a folder id that is not a string never reaches the
+   registry.
+3. **The renderer is not trusted with the machine.** It runs sandboxed, with context isolation on
+   and no Node integration, and its page carries
+   `default-src 'none'; script-src 'self'; connect-src 'none'`. The preload exposes the named
+   channels and no generic `invoke`. `source:open` and `source:reveal` refuse any path that is
+   not a document in an index the user built, because otherwise "the renderer has no filesystem"
+   would be untrue: the shell could be asked to open anything.
+4. **The channel set is a `Record` over `IpcChannel`.** Leaving one unimplemented is a compile
+   error rather than a missing handler at runtime.
+
+`index:start` resolves when the run ends, so a cancelled or failed run arrives as an `IpcFailure`
+on the same call that started it, and the contract needs no fifth event. Progress and per-file
+failures still arrive as events while it runs — a file the run could not read is named on
+`index:error` rather than disappearing.
+
+Three things are deliberately absent rather than faked:
+
+- `ask:chunk` is never emitted, because the extractive engine does not stream;
+- `model:prepare` is refused with `EMBEDDING_UNAVAILABLE`, and any provider other than
+  `extractive` with `LLM_UNAVAILABLE`. `engine:status` reports both as unavailable, so the window
+  says "not in this build" instead of showing a control that would do nothing;
+- the IPC surface has no channel for deleting the whole data directory, so `delete --all` remains
+  a CLI operation. Removing a folder removes its index with it, as it does in the CLI.
+
+The window has no installer and is Windows-only for now. `npm run desktop` builds the three
+bundles and starts it. The renderer must reach `shared` through the `@twigraph/shared/ipc` and
+`@twigraph/shared/citations` subpaths: the package root pulls in `config.ts`, which uses
+`node:fs`, and the page has no filesystem.
 
 ## Privacy
 
@@ -311,8 +371,8 @@ fragment of a document.
 
 ### Current verified baseline
 
-At the completion of the first CLI vertical slice and npm packaging work, `npm run verify`
-reports 22 test files, 312 passing tests, 3 opt-in smoke tests skipped by default, and coverage of 94.79%
-statements, 85.97% branches, 97.76% functions, and 95.89% lines. Branch coverage is close
-to the 85% gate, so new branches must arrive with focused tests. These values are a
-snapshot; the command output is authoritative after subsequent changes.
+At the completion of the desktop vertical slice, `npm run verify` reports 32 test files plus 1
+opt-in Electron smoke test file, 438 passing tests with 4 opt-in smoke tests skipped by default,
+and coverage of 95.74% statements, 86.86% branches, 98.97% functions, and 96.66% lines. Branch
+coverage is the closest to its 85% gate, so new branches must arrive with focused tests. These
+values are a snapshot; the command output is authoritative after subsequent changes.
