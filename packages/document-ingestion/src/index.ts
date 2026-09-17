@@ -9,6 +9,7 @@ export {
   MARKDOWN_PARSER_VERSION,
 } from './parsers/markdown'
 export { createTextParser, TEXT_PARSER_ID, TEXT_PARSER_VERSION } from './parsers/text'
+export { createHtmlParser, HTML_PARSER_ID, HTML_PARSER_VERSION } from './parsers/html'
 export {
   assembleDocument,
   firstNonBlankLine,

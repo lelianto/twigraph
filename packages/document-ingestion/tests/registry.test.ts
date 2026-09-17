@@ -7,12 +7,12 @@ import { createParserRegistry, defaultParsers } from '../src/registry'
 describe('parser registry', () => {
   it('exposes the default parsers with sorted ids', () => {
     const registry = createParserRegistry(defaultParsers())
-    expect(registry.ids).toEqual(['markdown', 'text'])
+    expect(registry.ids).toEqual(['html', 'markdown', 'text'])
   })
 
   it('reports a version for every registered parser', () => {
     const registry = createParserRegistry(defaultParsers())
-    expect(registry.versions).toEqual({ markdown: '1', text: '1' })
+    expect(registry.versions).toEqual({ html: '1', markdown: '1', text: '1' })
   })
 
   it('resolves an extension to its parser, case-insensitively', () => {
@@ -21,6 +21,8 @@ describe('parser registry', () => {
     expect(registry.forExtension('.MD')?.id).toBe('markdown')
     expect(registry.forExtension('md')?.id).toBe('markdown')
     expect(registry.forExtension('.txt')?.id).toBe('text')
+    expect(registry.forExtension('.html')?.id).toBe('html')
+    expect(registry.forExtension('.htm')?.id).toBe('html')
   })
 
   it('returns null for an extension nobody claims', () => {
@@ -31,7 +33,7 @@ describe('parser registry', () => {
 
   it('lists every extension it can parse, sorted', () => {
     const registry = createParserRegistry(defaultParsers())
-    expect(registry.extensions).toEqual(['.md', '.txt'])
+    expect(registry.extensions).toEqual(['.htm', '.html', '.md', '.txt'])
   })
 
   it('refuses two parsers claiming the same extension', () => {
@@ -52,7 +54,7 @@ describe('parser registry', () => {
 describe('the default parser set', () => {
   it('is a fresh array on every call, so one test cannot poison another', () => {
     expect(defaultParsers()).not.toBe(defaultParsers())
-    expect(defaultParsers().map((parser) => parser.id)).toEqual(['markdown', 'text'])
+    expect(defaultParsers().map((parser) => parser.id)).toEqual(['markdown', 'text', 'html'])
   })
 
   it('gives every parser a version and at least one extension', () => {

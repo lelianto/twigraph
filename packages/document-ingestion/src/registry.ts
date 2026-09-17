@@ -1,6 +1,7 @@
 import { TwigraphError } from '@twigraph/shared'
 
 import type { VersionedParser } from './parser'
+import { createHtmlParser } from './parsers/html'
 import { createMarkdownParser } from './parsers/markdown'
 import { createTextParser } from './parsers/text'
 
@@ -70,5 +71,5 @@ export function createParserRegistry(parsers: readonly VersionedParser[] = []): 
 
 /** A fresh array each call, so a caller cannot mutate the shared set. */
 export function defaultParsers(): readonly VersionedParser[] {
-  return [createMarkdownParser(), createTextParser()]
+  return [createMarkdownParser(), createTextParser(), createHtmlParser()]
 }
