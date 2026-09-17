@@ -2,7 +2,7 @@ import { stat } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 
 import { buildIndex, createIndexStore } from '@twigraph/indexing'
-import { createRetriever, meetsConfidence } from '@twigraph/retrieval'
+import { createExtractiveAnswerEngine, createRetriever, meetsConfidence } from '@twigraph/retrieval'
 import {
   TwigraphError,
   PRIVACY_MESSAGE,
@@ -18,6 +18,7 @@ import type {
   Citation,
   DocumentRecord,
   FolderRecord,
+  RetrievalSnapshot,
   SearchHit,
 } from '@twigraph/shared'
 
@@ -32,6 +33,7 @@ Usage:
   twigraph index <folder-id>        Read a folder and write its index
   twigraph index --all              Index every folder
   twigraph search "<query>"         Search the indexed folders
+  twigraph ask "<question>"         Answer a question from indexed folders
   twigraph status                   Show what is indexed and how much space it takes
   twigraph delete <folder-id>       Delete one index, keeping the folder in the list
   twigraph delete --all             Delete every index, the config and any prepared model
@@ -321,6 +323,76 @@ async function searchCommand(context: Context, rest: readonly string[]): Promise
   return 0
 }
 
+async function askCommand(context: Context, rest: readonly string[]): Promise<number> {
+  const question = rest.join(' ').trim()
+  if (question === '') throw new UsageError('usage: twigraph ask "<question>"')
+
+  const registry = registryFor(context)
+  const data = storeFor(context)
+  const config = await loadConfig(context.configPath)
+
+  let loadedChunks: ChunkRecord[] = []
+  const retriever = createRetriever(
+    async () => {
+      const chunks: ChunkRecord[] = []
+      const documents: DocumentRecord[] = []
+      for (const folder of await registry.list()) {
+        if ((await data.store.readManifest(folder.id)) === null) continue
+        chunks.push(...(await data.store.readChunks(folder.id)))
+        documents.push(...(await data.store.readDocuments(folder.id)))
+      }
+      loadedChunks = chunks
+      return { chunks, documents }
+    },
+    { config: config.retrieval, now: context.now },
+  )
+
+  const result = await retriever.search(
+    question,
+    context.top === undefined ? undefined : { topK: context.top },
+  )
+  const confident = meetsConfidence(result, config.retrieval.minScore)
+
+  const chunksById = new Map<string, ChunkRecord>(loadedChunks.map((c) => [c.id, c]))
+  const snapshot: RetrievalSnapshot = {
+    hits: result.hits,
+    chunksById,
+    vectorsByChunkId: new Map(),
+    confident,
+  }
+
+  const engine = createExtractiveAnswerEngine()
+  const answer = await engine.answer(question, snapshot)
+
+  if (context.json) {
+    emit(context, [], answer)
+    return 0
+  }
+
+  if (answer.status === 'insufficient') {
+    context.io.out(answer.text)
+    if (answer.sources.length > 0) {
+      context.io.out('')
+      context.io.out('Sources consulted:')
+      for (const [position, hit] of answer.sources.entries()) {
+        context.io.out(
+          `  ${hit.score.toFixed(2)}  ${formatCitationLabel(citationOf(hit, position + 1))}`,
+        )
+      }
+    }
+    return 0
+  }
+
+  context.io.out(answer.text)
+  context.io.out('')
+  context.io.out('Citations:')
+  for (const citation of answer.citations) {
+    context.io.out(`  [${citation.marker}]  ${formatCitationLabel(citation)}`)
+    context.io.out(`        ${citation.excerpt}`)
+  }
+  return 0
+}
+
 async function statusCommand(context: Context): Promise<number> {
   const registry = registryFor(context)
   const data = storeFor(context)
@@ -429,6 +501,7 @@ export async function run(argv: readonly string[], io: CliIo): Promise<number> {
     if (group === 'folder') return await folderCommand(context, rest)
     if (group === 'index') return await indexCommand(context, rest)
     if (group === 'search') return await searchCommand(context, rest)
+    if (group === 'ask') return await askCommand(context, rest)
     if (group === 'status') return await statusCommand(context)
     if (group === 'delete') return await deleteCommand(context, rest)
     if (group === 'privacy') return await privacyCommand(context)

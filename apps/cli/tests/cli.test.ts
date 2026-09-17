@@ -229,6 +229,52 @@ describe('searching', () => {
   })
 })
 
+describe('answering with ask', () => {
+  it('refuses an empty question', async () => {
+    const result = await cli(['ask', ''])
+    expect(result.code).toBe(2)
+    expect(result.errors.join('\n')).toContain('usage: twigraph ask')
+  })
+
+  it('answers confident questions with grounded citations', async () => {
+    const id = await addFolder()
+    await cli(['index', id])
+
+    const result = await cli(['ask', 'staging directory swap'])
+    expect(result.code).toBe(0)
+    expect(result.lines.join('\n')).toContain('[1]')
+    expect(result.lines.join('\n')).toContain('Citations:')
+    expect(result.lines.join('\n')).toContain('storage.md')
+  })
+
+  it('answers in JSON format with Answer structure', async () => {
+    const id = await addFolder()
+    await cli(['index', id])
+
+    const result = await cli(['ask', 'staging directory swap', '--json'])
+    expect(result.code).toBe(0)
+    const answer = JSON.parse(result.lines.join('\n')) as {
+      status: string
+      text: string
+      citations: { marker: number; filename: string }[]
+      passages: { citationMarkers: number[] }[]
+    }
+    expect(answer.status).toBe('answered')
+    expect(answer.citations.length).toBeGreaterThan(0)
+    expect(answer.passages.length).toBeGreaterThan(0)
+    expect(answer.text).toContain('[1]')
+  })
+
+  it('reports insufficient answer for unconfident query', async () => {
+    const id = await addFolder()
+    await cli(['index', id])
+
+    const result = await cli(['ask', 'completely unrelated non-existent content query'])
+    expect(result.code).toBe(0)
+    expect(result.lines.join('\n')).toContain('No reliable answer found.')
+  })
+})
+
 describe('deleting', () => {
   it('deletes one index and leaves the folder in the list', async () => {
     const id = await addFolder()
