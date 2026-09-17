@@ -25,6 +25,8 @@
     "baseUrl": ".",
     "paths": {
       "@twigraph/shared": ["packages/shared/src/index.ts"],
+      "@twigraph/shared/citations": ["packages/shared/src/citations.ts"],
+      "@twigraph/shared/ipc": ["packages/shared/src/ipc.ts"],
       "@twigraph/document-ingestion": ["packages/document-ingestion/src/index.ts"],
       "@twigraph/indexing": ["packages/indexing/src/index.ts"],
       "@twigraph/retrieval": ["packages/retrieval/src/index.ts"],
@@ -35,6 +37,7 @@
     "packages/*/src/**/*.ts",
     "packages/*/tests/**/*.ts",
     "apps/*/src/**/*.ts",
+    "apps/*/src/**/*.tsx",
     "apps/*/tests/**/*.ts",
     "tests/**/*.ts",
     "vitest.config.ts"

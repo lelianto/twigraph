@@ -6,6 +6,12 @@ const resolve = (path: string): string => fileURLToPath(new URL(path, import.met
 export default defineConfig({
   resolve: {
     alias: {
+      // Before '@twigraph/shared': a Vite alias matches on a path prefix, so the bare entry
+      // would otherwise swallow these subpaths and resolve them to '.…/src/index.ts/ipc'.
+      // They exist so a renderer can reach a value without pulling in the whole package,
+      // which reaches for node:fs.
+      '@twigraph/shared/citations': resolve('./packages/shared/src/citations.ts'),
+      '@twigraph/shared/ipc': resolve('./packages/shared/src/ipc.ts'),
       '@twigraph/shared': resolve('./packages/shared/src/index.ts'),
       '@twigraph/document-ingestion': resolve('./packages/document-ingestion/src/index.ts'),
       '@twigraph/indexing': resolve('./packages/indexing/src/index.ts'),
