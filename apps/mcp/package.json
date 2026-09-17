@@ -1,0 +1,17 @@
+{
+  "name": "@twigraph/mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Read-only MCP server for searching local twigraph indexes.",
+  "bin": {
+    "twigraph-mcp": "../../dist/mcp.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@twigraph/indexing": "0.2.0",
+    "@twigraph/retrieval": "0.2.0",
+    "@twigraph/shared": "0.1.0",
+    "zod": "^4.1.12"
+  }
+}

@@ -6,7 +6,8 @@
   "license": "Apache-2.0",
   "type": "module",
   "bin": {
-    "twigraph": "./dist/cli.js"
+    "twigraph": "./dist/cli.js",
+    "twigraph-mcp": "./dist/mcp.js"
   },
   "files": [
     "dist",
@@ -46,8 +47,11 @@
     "test:watch": "vitest",
     "fixture:generate": "node fixtures/generate.mjs",
     "twigraph": "tsx apps/cli/src/main.ts",
+    "twigraph:mcp": "tsx apps/mcp/src/main.ts",
     "build:cli": "node scripts/build-cli.mjs",
-    "prepack": "npm run build:cli",
+    "build:mcp": "node scripts/build-mcp.mjs",
+    "build": "npm run build:cli && npm run build:mcp",
+    "prepack": "npm run build",
     "verify": "npm run typecheck && npm run lint && npm run test"
   },
   "devDependencies": {
@@ -61,5 +65,9 @@
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.47.1",
     "vitest": "^5.0.1"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^4.6.5"
   }
 }

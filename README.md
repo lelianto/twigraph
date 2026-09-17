@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/twigraph-logo.png" alt="twigraph logo" width="168" />
+  <img src="assets/twigraph-logo.png" alt="twigraph branch icon" width="168" />
 
   # twigraph
 
@@ -43,6 +43,7 @@ command line, end to end. Implemented today:
   and tested deletion path;
 - BM25 retrieval with citations, and a confidence gate that refuses a weak query;
 - a CLI covering folders, indexing, search, status, privacy, and deletion;
+- a read-only local MCP server for AI clients that reuses the same index;
 - automated tests with enforced coverage thresholds.
 
 Still on the roadmap, and deliberately not claimed yet:
@@ -129,6 +130,27 @@ either, twigraph uses the place your platform expects application data to live:
 `npm run twigraph` is a development convenience that runs the CLI from source. A packaged
 binary is planned alongside the desktop application.
 
+## Local MCP server
+
+Build the stdio server with:
+
+```bash
+npm run build:mcp
+```
+
+Configure an MCP client to start `node <absolute-project-path>/dist/mcp.js`. The server uses
+the same data directory as the CLI, including `TWIGRAPH_DATA_DIR` when set, and exposes three
+read-only tools:
+
+- `twigraph_search` searches indexed chunks and returns exact text plus source metadata;
+- `twigraph_status` lists registered folders and their index status;
+- `twigraph_get_chunk` retrieves one exact indexed chunk by id.
+
+The MCP server does not index folders automatically, read arbitrary files, open a network
+port, or make network requests. Add and index folders with the CLI first. AI clients should
+use `twigraph_search` before broad filesystem scans when they need to locate text in the
+user-selected document collection.
+
 **No command in this build makes a network request at all.** The test suite installs a
 guard that fails the run if one tries, and asserts that a full add-index-search-delete
 cycle leaves zero attempts behind. `TWIGRAPH_OFFLINE=1` is recorded and reported, and will be
@@ -173,6 +195,8 @@ Useful commands:
 | `npm run verify` | Run type checking, linting, and the coverage-gated test suite. |
 | `npm run test:watch` | Run the fast TDD feedback loop. |
 | `npm run twigraph -- <args>` | Run the CLI from source, e.g. `npm run twigraph -- status`. |
+| `npm run build:mcp` | Build the local stdio MCP server at `dist/mcp.js`. |
+| `npm run twigraph:mcp` | Run the MCP server from source for development. |
 | `npm run fixture:generate` | Rewrite the synthetic fixtures under `fixtures/sample/`. |
 | `npm run format:check` | Check repository formatting without modifying files. |
 | `npm run format` | Format the repository with Prettier. |
@@ -185,11 +209,12 @@ packages/document-ingestion/  Folder scanning and the .txt and .md parsers
 packages/indexing/            Deterministic chunking and the on-disk index
 packages/retrieval/           BM25 ranking and search results
 apps/cli/                     The command line interface
+apps/mcp/                     Read-only local MCP server
 docs/                         Architecture notes
 fixtures/                     The synthetic fixture generator
 tests/setup/                  Determinism and no-network safeguards
 tests/smoke/                  Cross-cutting behavior checks
-assets/                       Project branding
+assets/                       Symbol-only project brand icon
 ```
 
 ## Contributing

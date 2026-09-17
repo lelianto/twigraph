@@ -15,12 +15,18 @@ packages/document-ingestion  folder scan -> Block[]            (parsers live beh
 packages/indexing            Block[] -> ChunkRecord[] -> on-disk index
 packages/retrieval           query -> ranked hits -> SearchResult
 apps/cli                     the headless product
+apps/mcp                     read-only stdio adapter over the same local index
 ```
 
 Dependencies point one way only: `shared` is imported by everything and imports nothing
 from this workspace. `retrieval` never reads the filesystem directly — it works on records
 an `IndexStore` handed it. That is what lets the whole retrieval path be tested without a
 disk.
+
+The MCP adapter exposes search, index status, and exact chunk lookup. It never scans source
+folders or opens original documents: every result comes from an index the user explicitly
+built through twigraph. All tools are read-only and use stdio, so the adapter opens no
+listening port and adds no network path.
 
 Parsers are the only place that knows a file format exists. There is no
 `if (extension === '.pdf')` anywhere outside the parser registry.

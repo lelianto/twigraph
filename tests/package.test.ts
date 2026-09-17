@@ -11,13 +11,16 @@ interface PackageManifest {
 }
 
 describe('the public npm package', () => {
-  it('publishes a built Twigraph CLI instead of TypeScript workspace sources', async () => {
+  it('publishes built CLI and MCP entrypoints instead of TypeScript workspace sources', async () => {
     const manifest = JSON.parse(await readFile('package.json', 'utf8')) as PackageManifest
 
     expect(manifest.name).toBe('twigraph')
     expect(manifest.private).toBe(false)
-    expect(manifest.bin).toEqual({ twigraph: './dist/cli.js' })
+    expect(manifest.bin).toEqual({
+      twigraph: './dist/cli.js',
+      'twigraph-mcp': './dist/mcp.js',
+    })
     expect(manifest.files).toEqual(['dist', 'assets/twigraph-logo.png', 'README.md', 'LICENSE'])
-    expect(manifest.scripts?.prepack).toBe('npm run build:cli')
+    expect(manifest.scripts?.prepack).toBe('npm run build')
   })
 })

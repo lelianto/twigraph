@@ -4,13 +4,13 @@ import { resolve } from 'node:path'
 import { build } from 'esbuild'
 
 const outputDirectory = resolve('dist')
-const outputFile = resolve(outputDirectory, 'cli.js')
+const outputFile = resolve(outputDirectory, 'mcp.js')
 
 await mkdir(outputDirectory, { recursive: true })
 await rm(outputFile, { force: true })
 
 await build({
-  entryPoints: [resolve('apps/cli/src/main.ts')],
+  entryPoints: [resolve('apps/mcp/src/main.ts')],
   outfile: outputFile,
   bundle: true,
   format: 'esm',
