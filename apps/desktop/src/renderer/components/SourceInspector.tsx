@@ -1,75 +1,90 @@
+import { useEffect } from 'react'
+
 import type { SearchHit } from '@twigraph/shared'
 
 import { hitHeading, hitPageRange } from '../view-model'
 
 export interface SelectedSource {
   readonly hit: SearchHit
-  /** The marker it was reached through, when it was reached from an answer. */
   readonly marker: number | null
 }
 
 export interface SourceInspectorProps {
   readonly source: SelectedSource | null
+  readonly onClose: () => void
   readonly onOpen: (absolutePath: string) => void
   readonly onReveal: (absolutePath: string) => void
 }
 
-/**
- * Exactly what the selected passage says, in full, with the two things a person wants next:
- * open the file, or show it in the folder it lives in.
- */
-export function SourceInspector({ source, onOpen, onReveal }: SourceInspectorProps) {
-  if (source === null) {
-    return (
-      <aside className="pane pane--inspector">
-        <div className="inspector">
-          <h2 className="pane__title">Source</h2>
-          <div className="inspector__body">
-            <p className="empty__body">
-              Choose a passage and it appears here in full, with a way to open the file it came
-              from.
-            </p>
-          </div>
-        </div>
-      </aside>
-    )
-  }
+export function SourceInspector({ source, onClose, onOpen, onReveal }: SourceInspectorProps) {
+  useEffect(() => {
+    if (source === null) return
+    const closeOnEscape = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', closeOnEscape)
+    return () => window.removeEventListener('keydown', closeOnEscape)
+  }, [onClose, source])
 
-  const { hit, marker } = source
-  const heading = hitHeading(hit)
-  const page = hitPageRange(hit)
+  const heading = source === null ? null : hitHeading(source.hit)
+  const page = source === null ? null : hitPageRange(source.hit)
 
   return (
-    <aside className="pane pane--inspector">
+    <aside
+      className={`pane pane--inspector${source === null ? '' : ' pane--inspector-open'}`}
+      aria-labelledby="source-heading"
+      data-source-inspector
+    >
       <div className="inspector">
-        <h2 className="pane__title">Source</h2>
-        <div className="inspector__body">
-          <p className="inspector__name">
-            {marker === null ? null : <span className="inspector__where">[{marker}] </span>}
-            {hit.filename}
-          </p>
-          {heading === null && page === null ? null : (
-            <p className="inspector__where">
-              {heading}
-              {heading !== null && page !== null ? '  ' : ''}
-              {page}
-            </p>
-          )}
-          <p className="inspector__path">{hit.absolutePath}</p>
-          <p className="inspector__text">{hit.text}</p>
-        </div>
-        <div className="inspector__actions">
-          <button
-            type="button"
-            className="button button--primary"
-            onClick={() => onOpen(hit.absolutePath)}
-          >
-            Open
-          </button>
-          <button type="button" className="button" onClick={() => onReveal(hit.absolutePath)}>
-            Show in Explorer
+        <div className="inspector__head">
+          <div>
+            <span className="pane__eyebrow">Evidence</span>
+            <h2 id="source-heading">Selected source</h2>
+          </div>
+          <button type="button" className="button button--quiet inspector__close" onClick={onClose}>
+            Close
           </button>
         </div>
+
+        {source === null ? (
+          <div className="inspector__empty">
+            <span className="inspector__empty-marker">[ ]</span>
+            <p>Select a citation or passage to inspect its exact source text here.</p>
+          </div>
+        ) : (
+          <>
+            <div className="inspector__body">
+              <p className="inspector__marker">
+                {source.marker === null ? 'Retrieved passage' : `Source [${source.marker}]`}
+              </p>
+              <h3 className="inspector__name">{source.hit.filename}</h3>
+              {heading === null && page === null ? null : (
+                <p className="inspector__where">{[heading, page].filter(Boolean).join(' · ')}</p>
+              )}
+              <p className="inspector__path">{source.hit.absolutePath}</p>
+              <div className="inspector__quote">
+                <span>Exact indexed text</span>
+                <p>{source.hit.text}</p>
+              </div>
+            </div>
+            <div className="inspector__actions">
+              <button
+                type="button"
+                className="button button--primary"
+                onClick={() => onOpen(source.hit.absolutePath)}
+              >
+                Open file
+              </button>
+              <button
+                type="button"
+                className="button"
+                onClick={() => onReveal(source.hit.absolutePath)}
+              >
+                Show in Explorer
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </aside>
   )

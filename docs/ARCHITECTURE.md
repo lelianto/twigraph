@@ -291,7 +291,7 @@ line is searchable in the window without copying anything.
 ```
 apps/desktop/src/main        service.ts (every channel), ipc.ts (the boundary), main.ts (Electron)
 apps/desktop/src/preload     api.ts: the object contextBridge exposes as window.twigraph
-apps/desktop/src/renderer    the page, and view-model.ts for everything it says
+apps/desktop/src/renderer    the page, pure view-model state/copy, and responsive evidence UI
 ```
 
 Four rules hold across the split:
@@ -328,7 +328,13 @@ Three things are deliberately absent rather than faked:
   a CLI operation. Removing a folder removes its index with it, as it does in the CLI.
 
 The window has no installer and is Windows-only for now. `npm run desktop` builds the three
-bundles and starts it. The renderer must reach `shared` through the `@twigraph/shared/ipc` and
+bundles and starts it. Its renderer guides the folder, index, query, answer and source-inspection
+states without owning any engine decision. A selected source is a persistent complementary region
+on wide windows and a closable drawer on narrower ones. The page follows the system colour scheme
+by default; an explicit Light or Dark choice is stored only in renderer `localStorage`, not in the
+engine configuration or IPC contract.
+
+The renderer must reach `shared` through the `@twigraph/shared/ipc` and
 `@twigraph/shared/citations` subpaths: the package root pulls in `config.ts`, which uses
 `node:fs`, and the page has no filesystem.
 
@@ -371,8 +377,8 @@ fragment of a document.
 
 ### Current verified baseline
 
-At the completion of the desktop vertical slice, `npm run verify` reports 32 test files plus 1
-opt-in Electron smoke test file, 438 passing tests with 4 opt-in smoke tests skipped by default,
+After the responsive UI and system theme pass, `npm run verify` reports 34 test files plus 1
+opt-in Electron smoke test file, 450 passing tests with 4 opt-in smoke tests skipped by default,
 and coverage of 95.74% statements, 86.86% branches, 98.97% functions, and 96.66% lines. Branch
 coverage is the closest to its 85% gate, so new branches must arrive with focused tests. These
 values are a snapshot; the command output is authoritative after subsequent changes.

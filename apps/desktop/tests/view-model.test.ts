@@ -4,6 +4,7 @@ import type { Answer, Citation, SearchHit } from '@twigraph/shared'
 import type { FolderSummary } from '@twigraph/shared/ipc'
 
 import {
+  accessibleHitLabel,
   answerLines,
   citationFor,
   citationLabel,
@@ -13,8 +14,11 @@ import {
   formatWhen,
   folderName,
   folderStateLine,
+  groupAnswerSources,
   hitHeading,
   hitPageRange,
+  resultStatus,
+  workspacePhase,
 } from '../src/renderer/view-model'
 
 const hit: SearchHit = {
@@ -49,6 +53,77 @@ const answer: Answer = {
   unverifiedMarkers: [],
   sources: [hit],
 }
+
+describe('choosing the workspace phase', () => {
+  const folder: FolderSummary = {
+    id: '7c5ff45cf68f1b5a',
+    path: 'C:\\notes',
+    addedAtMs: 1_700_000_000_000,
+    lastIndexedAtMs: null,
+    documentCount: 0,
+    chunkCount: 0,
+    failedCount: 0,
+    indexSizeBytes: 0,
+  }
+
+  it('distinguishes first run, indexing setup and a ready workspace', () => {
+    expect(workspacePhase({ folders: [], activeFolderId: null, answer: null, result: null })).toBe(
+      'no-folders',
+    )
+    expect(
+      workspacePhase({ folders: [folder], activeFolderId: folder.id, answer: null, result: null }),
+    ).toBe('needs-index')
+    expect(
+      workspacePhase({
+        folders: [{ ...folder, lastIndexedAtMs: 1_700_000_000_000, documentCount: 4 }],
+        activeFolderId: folder.id,
+        answer: null,
+        result: null,
+      }),
+    ).toBe('ready')
+  })
+
+  it('lets an answer or search result take priority over the idle phase', () => {
+    expect(
+      workspacePhase({ folders: [folder], activeFolderId: folder.id, answer, result: null }),
+    ).toBe('answer')
+    expect(
+      workspacePhase({
+        folders: [folder],
+        activeFolderId: folder.id,
+        answer: null,
+        result: { query: 'atomic', mode: 'lexical', hits: [hit], tookMs: 3 },
+      }),
+    ).toBe('search-results')
+  })
+})
+
+describe('describing result evidence', () => {
+  it('separates cited sources from additional retrieved passages', () => {
+    const additional = { ...hit, chunkId: 'another:1', filename: 'other.md' }
+    const grouped = groupAnswerSources({ ...answer, sources: [hit, additional] })
+
+    expect(grouped.cited).toEqual([hit])
+    expect(grouped.additional).toEqual([additional])
+  })
+
+  it('builds a useful accessible name for a source row', () => {
+    expect(accessibleHitLabel(hit)).toBe('storage.md, § Storage › Atomic writes, relevance 0.67')
+  })
+
+  it('announces answer, insufficient and search outcomes plainly', () => {
+    expect(resultStatus({ answer, result: null })).toBe('Answer ready with 2 sources.')
+    expect(resultStatus({ answer: { ...answer, status: 'insufficient' }, result: null })).toBe(
+      'No reliable answer. 1 closest passage available.',
+    )
+    expect(
+      resultStatus({
+        answer: null,
+        result: { query: 'atomic', mode: 'lexical', hits: [hit], tookMs: 3 },
+      }),
+    ).toBe('1 matching passage found.')
+  })
+})
 
 describe('turning an answer into lines', () => {
   it('keeps one line per passage, in the order the engine wrote them', () => {

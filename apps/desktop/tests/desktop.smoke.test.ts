@@ -84,15 +84,26 @@ describe.skipIf(!ENABLED)('the desktop window, in a real Electron process', () =
       readonly policyViolations: readonly string[]
       readonly layout: {
         readonly columns: string
-        readonly rail: { readonly width: number } | null
-        readonly inspector: { readonly width: number } | null
+        readonly rail: { readonly x: number; readonly width: number } | null
+        readonly canvas: { readonly x: number; readonly width: number } | null
+        readonly inspector: { readonly x: number; readonly width: number } | null
         readonly status: { readonly height: number } | null
+        readonly documentOverflow: boolean
       }
       readonly ledger: {
         readonly lines: number
         readonly markers: number
         readonly threads: number
         readonly text: string | null
+      }
+      readonly semantics: {
+        readonly queryLabel: string | null
+        readonly folderSelectorTag: string | null
+        readonly folderActions: readonly { readonly text: string; readonly visible: boolean }[]
+        readonly sourceText: string
+        readonly dialogOpen: boolean
+        readonly dialogFocused: boolean
+        readonly dialogFocusReturned: boolean
       }
       readonly privacy: { readonly ok: boolean }
       readonly folders: { readonly ok: boolean }
@@ -134,12 +145,28 @@ describe.skipIf(!ENABLED)('the desktop window, in a real Electron process', () =
     expect(calls).toContain('settings:get')
     expect(calls).toContain('ask:question')
 
-    // The three panes are really laid out side by side, rather than the window being one column
-    // that happens to scroll.
-    expect(probe.layout.columns).toBe('236px 594px 336px')
-    expect(probe.layout.rail?.width).toBe(236)
-    expect(probe.layout.inspector?.width).toBe(336)
-    expect(probe.layout.status?.height).toBe(34)
+    // Wide mode keeps the working field between a folder navigator and the evidence inspector.
+    expect(probe.layout.columns.split(' ')).toHaveLength(3)
+    expect(probe.layout.rail?.width).toBeGreaterThanOrEqual(220)
+    expect(probe.layout.canvas?.width).toBeGreaterThanOrEqual(400)
+    expect(probe.layout.inspector?.width).toBeGreaterThanOrEqual(320)
+    expect((probe.layout.rail?.x ?? -1) + (probe.layout.rail?.width ?? 0)).toBe(
+      probe.layout.canvas?.x,
+    )
+    expect((probe.layout.canvas?.x ?? -1) + (probe.layout.canvas?.width ?? 0)).toBe(
+      probe.layout.inspector?.x,
+    )
+    expect(probe.layout.status?.height).toBeGreaterThanOrEqual(40)
+    expect(probe.layout.documentOverflow).toBe(false)
+
+    // The primary controls are semantic and visible without depending on hover.
+    expect(probe.semantics.queryLabel).toBe('Ask or search your indexed files')
+    expect(probe.semantics.folderSelectorTag).toBe('BUTTON')
+    expect(probe.semantics.folderActions.map((action) => action.text)).toEqual([
+      'Re-index',
+      'Remove',
+    ])
+    expect(probe.semantics.folderActions.every((action) => action.visible)).toBe(true)
 
     // An answer was asked for and the ledger drew it: two sentences, each with the source it
     // came from in the gutter beside it.
@@ -147,6 +174,22 @@ describe.skipIf(!ENABLED)('the desktop window, in a real Electron process', () =
     expect(probe.ledger.markers).toBe(2)
     expect(probe.ledger.threads).toBe(2)
     expect(probe.ledger.text).toContain('reciprocal rank fusion')
+    expect(probe.semantics.sourceText).toContain('Source [1]')
+    expect(probe.semantics.sourceText).toContain('retrieval.md')
+    expect(probe.semantics.dialogOpen).toBe(true)
+    expect(probe.semantics.dialogFocused).toBe(true)
+    expect(probe.semantics.dialogFocusReturned).toBe(true)
+
+    const compact = lineAfter(output, 'COMPACT ') as {
+      readonly columns: string
+      readonly inspectorPosition: string | null
+      readonly inspectorVisible: boolean
+      readonly documentOverflow: boolean
+    }
+    expect(compact.columns.split(' ')).toHaveLength(2)
+    expect(compact.inspectorPosition).toBe('fixed')
+    expect(compact.inspectorVisible).toBe(true)
+    expect(compact.documentOverflow).toBe(false)
 
     // The screenshot is for a person to look at; its existence is what the test can check.
     expect(existsSync(SHOT), 'the probe left no screenshot behind').toBe(true)

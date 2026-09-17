@@ -47,8 +47,8 @@ command line or from a desktop window, end to end. Implemented today:
 - `ask`, the extractive answer path that turns ranked sources into a grounded answer with citations;
 - a CLI covering folders, indexing, search, ask, status, privacy, and deletion;
 - a read-only local MCP server for AI clients that reuses the same index;
-- a Windows desktop app that runs the same engine, with indexing progress, cancellation, and an
-  answer view that keeps every sentence beside the source it was quoted from;
+- a Windows desktop app that runs the same engine, guides the folder-to-index-to-query flow,
+  separates answers from their supporting evidence, and keeps the selected source in view;
 - automated tests with enforced coverage thresholds.
 
 Still on the roadmap, and deliberately not claimed yet:
@@ -150,10 +150,16 @@ What it does today:
 - adds a folder through the Windows folder picker, and indexes it with live progress;
 - cancels a run. The index you already had stays intact, because a cancelled run stops before
   the new one is put in place;
+- guides the first run from adding a folder, through building its index, to asking the first
+  question;
 - searches, and answers questions with text quoted from your files and a citation on every
-  sentence — the answer is drawn as a ledger, with each sentence beside the source it came from;
+  sentence. The answer, sources used, and other retrieved passages have separate visual roles;
+- opens a selected source in a persistent inspector on wide windows and a closable source drawer
+  on narrower ones, then restores keyboard focus to the citation or passage that opened it;
 - opens a source file, or shows it in Explorer. Only a file that is part of an index you built
   can be opened, so the window cannot be used to reach the rest of the disk;
+- follows the system light or dark theme by default, with local System, Light, and Dark choices in
+  Settings and privacy;
 - turns offline mode on, and shows where the data lives.
 
 What it does not do yet:
@@ -207,8 +213,8 @@ the flag that refuses the optional embedding download once that exists.
 
 The current vertical slice was last verified with:
 
-- 32 test files, plus 1 opt-in Electron smoke test file;
-- 438 passing tests, with 4 opt-in smoke tests skipped by default;
+- 34 test files, plus 1 opt-in Electron smoke test file;
+- 450 passing tests, with 4 opt-in smoke tests skipped by default;
 - 95.74% statement, 86.86% branch, 98.97% function, and 96.66% line coverage;
 - a real synthetic-fixture run through add, index, search, status, privacy, and deletion;
 - a real Electron window run through page mount, a grounded answer, and a refused network

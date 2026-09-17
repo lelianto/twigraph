@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
-import type { EngineStatus, IndexProgressEvent, PrivacyStatus } from '@twigraph/shared/ipc'
 import type { TwigraphConfig } from '@twigraph/shared'
+import type { EngineStatus, IndexProgressEvent, PrivacyStatus } from '@twigraph/shared/ipc'
 
 import { describeIndexProgress } from '../view-model'
 
@@ -11,61 +11,155 @@ export interface StatusBarProps {
   readonly settings: TwigraphConfig | null
   readonly progress: IndexProgressEvent | null
   readonly offline: boolean
+  readonly theme: 'system' | 'light' | 'dark'
   readonly onSetOffline: (offline: boolean) => void
+  readonly onSetTheme: (theme: 'system' | 'light' | 'dark') => void
 }
 
-/**
- * The one place that says what this app is doing with your machine: which engine answers,
- * whether a model is available, whether anything can be reached, and where the data is.
- *
- * It says "not in this build" for the parts that are not built yet rather than showing a
- * control that would do nothing.
- */
 export function StatusBar({
   engine,
   privacy,
   settings,
   progress,
   offline,
+  theme,
   onSetOffline,
+  onSetTheme,
 }: StatusBarProps) {
   const [open, setOpen] = useState(false)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const dialogRef = useRef<HTMLDialogElement>(null)
+
+  useEffect(() => {
+    const dialog = dialogRef.current
+    if (dialog === null) return
+    if (open && !dialog.open) dialog.showModal()
+    if (!open && dialog.open) dialog.close()
+  }, [open])
+
+  const close = (): void => {
+    setOpen(false)
+    window.setTimeout(() => triggerRef.current?.focus(), 0)
+  }
 
   return (
     <footer className="status">
       {progress === null ? null : <Progress progress={progress} />}
-
       <span className="status__badge">
         <span className={`status__dot${offline ? ' status__dot--off' : ''}`} aria-hidden="true" />
-        {engine?.llm.label ?? 'Starting…'}
+        {engine?.llm.label ?? 'Starting'}
       </span>
-
-      <span aria-live="polite">
+      <span className="status__message" aria-live="polite">
         {progress === null ? privacy?.message : describeIndexProgress(progress)}
       </span>
-
       <span className="status__spacer" />
-
       <span className="status__path" title={engine?.storagePath}>
         {engine?.storagePath}
       </span>
-
       <button
+        ref={triggerRef}
         type="button"
         className="button button--quiet"
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => setOpen(true)}
       >
-        {open ? 'Close' : 'Settings'}
+        Settings and privacy
       </button>
 
-      {open ? (
-        <SettingsPanel
-          engine={engine}
-          settings={settings}
-          offline={offline}
-          onSetOffline={onSetOffline}
-        />
-      ) : null}
+      <dialog
+        ref={dialogRef}
+        className="settings"
+        aria-labelledby="settings-title"
+        onCancel={() => setOpen(false)}
+        onClose={() => setOpen(false)}
+      >
+        <div className="settings__head">
+          <div>
+            <span className="pane__eyebrow">Local configuration</span>
+            <h2 id="settings-title">Settings and privacy</h2>
+          </div>
+          <button type="button" className="button button--quiet" onClick={close}>
+            Close
+          </button>
+        </div>
+        <dl className="settings__list">
+          <div>
+            <dt>Search</dt>
+            <dd>Lexical BM25, fully offline</dd>
+          </div>
+          <div>
+            <dt>Answers</dt>
+            <dd>{engine?.llm.label ?? 'Extractive (Local)'}</dd>
+          </div>
+          <div>
+            <dt>Local model</dt>
+            <dd>
+              {engine?.llm.available === true && engine.llm.provider !== 'extractive'
+                ? 'Available'
+                : 'Not in this build'}
+            </dd>
+          </div>
+          <div>
+            <dt>Embeddings</dt>
+            <dd>{engine?.embeddings.available === true ? 'Ready' : 'Not in this build'}</dd>
+          </div>
+          <div>
+            <dt>Indexed folders</dt>
+            <dd>{settings === null ? '—' : settings.folders.length}</dd>
+          </div>
+        </dl>
+        <fieldset className="theme-setting">
+          <legend>Theme</legend>
+          <label>
+            <input
+              type="radio"
+              name="theme"
+              value="system"
+              checked={theme === 'system'}
+              onChange={() => onSetTheme('system')}
+            />
+            <span>System</span>
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="theme"
+              value="light"
+              checked={theme === 'light'}
+              onChange={() => onSetTheme('light')}
+            />
+            <span>Light</span>
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="theme"
+              value="dark"
+              checked={theme === 'dark'}
+              onChange={() => onSetTheme('dark')}
+            />
+            <span>Dark</span>
+          </label>
+        </fieldset>
+        <label className="offline-setting">
+          <span>
+            <strong>Offline mode</strong>
+            <small>Refuse every network destination when network features arrive.</small>
+          </span>
+          <input
+            type="checkbox"
+            checked={offline}
+            onChange={(event) => onSetOffline(event.target.checked)}
+          />
+        </label>
+        <p className="settings__note">
+          Nothing in this build makes a network request, whether offline mode is on or off. Local
+          embeddings and a local language model are not in this build.
+        </p>
+        <p className="settings__note">
+          Removing a folder deletes its index. Removing all twigraph data remains a CLI operation:{' '}
+          <code>twigraph delete --all</code>
+        </p>
+      </dialog>
     </footer>
   )
 }
@@ -78,84 +172,11 @@ function Progress({ progress }: { readonly progress: IndexProgressEvent }) {
     <div
       className="progress"
       role="progressbar"
+      aria-label="Indexing progress"
       aria-valuenow={progress.documentsProcessed}
       aria-valuemax={progress.documentsTotal}
     >
       <div className="progress__fill" style={{ width: `${filled}%` }} />
-    </div>
-  )
-}
-
-interface SettingsPanelProps {
-  readonly engine: EngineStatus | null
-  readonly settings: TwigraphConfig | null
-  readonly offline: boolean
-  readonly onSetOffline: (offline: boolean) => void
-}
-
-function SettingsPanel({ engine, settings, offline, onSetOffline }: SettingsPanelProps) {
-  return (
-    <div className="settings">
-      <p className="settings__title">This build</p>
-
-      <div className="settings__row">
-        <span className="settings__label">Search</span>
-        <span className="settings__value">Lexical (BM25) — runs offline, needs no model</span>
-      </div>
-
-      <div className="settings__row">
-        <span className="settings__label">Answers</span>
-        <span className="settings__value">{engine?.llm.label ?? 'Extractive (Local)'}</span>
-      </div>
-
-      <div className="settings__row">
-        <span className="settings__label">Local model</span>
-        <span className="settings__value settings__value--off">
-          {engine?.llm.available === true && engine.llm.provider !== 'extractive'
-            ? 'Available'
-            : 'Not in this build'}
-        </span>
-      </div>
-
-      <div className="settings__row">
-        <span className="settings__label">Embeddings</span>
-        <span className="settings__value settings__value--off">
-          {engine?.embeddings.available === true ? 'Ready' : 'Not in this build'}
-        </span>
-      </div>
-
-      <div className="settings__row">
-        <span className="settings__label">Offline mode</span>
-        <span className="settings__value">
-          <button
-            type="button"
-            className={`button ${offline ? 'button--primary' : ''}`}
-            onClick={() => onSetOffline(!offline)}
-          >
-            {offline ? 'On — nothing may be reached' : 'Off'}
-          </button>
-        </span>
-      </div>
-
-      <div className="settings__row">
-        <span className="settings__label">Indexed folders</span>
-        <span className="settings__value">
-          {settings === null ? '—' : `${settings.folders.length}`}
-        </span>
-      </div>
-
-      <p className="settings__note">
-        Nothing in this build makes a network request, whether or not offline mode is on. There is
-        no embedding model to download and no language model to reach, so the flag has nothing to
-        refuse yet — it is recorded in your config either way.
-      </p>
-
-      <p className="settings__note">
-        Removing a folder here deletes its index with it. Removing everything twigraph stores,
-        including its config, is still the command line&apos;s job:
-        <br />
-        <code>twigraph delete --all</code>
-      </p>
     </div>
   )
 }

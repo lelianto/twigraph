@@ -1,6 +1,6 @@
 import { formatCitationLabel, formatHeadingPath, formatPageRange } from '@twigraph/shared/citations'
 import type { FolderSummary, IndexProgressEvent } from '@twigraph/shared/ipc'
-import type { Answer, Citation, SearchHit } from '@twigraph/shared'
+import type { Answer, Citation, SearchHit, SearchResult } from '@twigraph/shared'
 
 /**
  * Everything the window shows, as plain functions.
@@ -8,6 +8,68 @@ import type { Answer, Citation, SearchHit } from '@twigraph/shared'
  * Keeping the formatting out of the components is what makes it testable without a DOM: the
  * `.tsx` files decide where things go, these decide what they say.
  */
+
+export type WorkspacePhase = 'no-folders' | 'needs-index' | 'ready' | 'answer' | 'search-results'
+
+export interface WorkspaceState {
+  readonly folders: readonly FolderSummary[]
+  readonly activeFolderId: string | null
+  readonly answer: Answer | null
+  readonly result: SearchResult | null
+}
+
+export function workspacePhase(state: WorkspaceState): WorkspacePhase {
+  if (state.answer !== null) return 'answer'
+  if (state.result !== null) return 'search-results'
+  if (state.folders.length === 0) return 'no-folders'
+
+  const active = state.folders.find((folder) => folder.id === state.activeFolderId)
+  const folder = active ?? state.folders[0]
+  return folder?.lastIndexedAtMs === null ? 'needs-index' : 'ready'
+}
+
+export interface GroupedAnswerSources {
+  readonly cited: readonly SearchHit[]
+  readonly additional: readonly SearchHit[]
+}
+
+export function groupAnswerSources(answer: Answer): GroupedAnswerSources {
+  const citedIds = new Set(answer.citations.map((citation) => citation.chunkId))
+  return {
+    cited: answer.sources.filter((source) => citedIds.has(source.chunkId)),
+    additional: answer.sources.filter((source) => !citedIds.has(source.chunkId)),
+  }
+}
+
+export function accessibleHitLabel(hit: SearchHit): string {
+  const locations = [hitHeading(hit), hitPageRange(hit)].filter(
+    (location): location is string => location !== null,
+  )
+  const where = locations.length === 0 ? '' : `, ${locations.join(', ')}`
+  return `${hit.filename}${where}, relevance ${formatScore(hit.score)}`
+}
+
+export function resultStatus({
+  answer,
+  result,
+}: {
+  readonly answer: Answer | null
+  readonly result: SearchResult | null
+}): string {
+  if (answer !== null) {
+    if (answer.status === 'insufficient') {
+      const count = answer.sources.length
+      return `No reliable answer. ${count} closest passage${count === 1 ? '' : 's'} available.`
+    }
+    const count = answer.citations.length
+    return `Answer ready with ${count} source${count === 1 ? '' : 's'}.`
+  }
+  if (result !== null) {
+    const count = result.hits.length
+    return `${count} matching passage${count === 1 ? '' : 's'} found.`
+  }
+  return ''
+}
 
 export interface AnswerLine {
   readonly text: string

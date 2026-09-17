@@ -13,9 +13,15 @@ import { FolderRail } from './components/FolderRail'
 import { SourceInspector } from './components/SourceInspector'
 import type { SelectedSource } from './components/SourceInspector'
 import { StatusBar } from './components/StatusBar'
-import { citationFor } from './view-model'
+import { citationFor, folderName, resultStatus, workspacePhase } from './view-model'
 
 type Mode = 'search' | 'ask'
+type ThemePreference = 'system' | 'light' | 'dark'
+
+function initialTheme(): ThemePreference {
+  const saved = localStorage.getItem('twigraph-theme')
+  return saved === 'light' || saved === 'dark' ? saved : 'system'
+}
 
 /** Long enough to notice the counts settle, short enough not to sit on a finished screen. */
 const SETTLE_MS = 1000
@@ -27,6 +33,7 @@ export function App() {
   const [settings, setSettings] = useState<TwigraphConfig | null>(null)
 
   const [mode, setMode] = useState<Mode>('ask')
+  const [theme, setTheme] = useState<ThemePreference>(initialTheme)
   const [query, setQuery] = useState('')
   const [result, setResult] = useState<SearchResult | null>(null)
   const [answer, setAnswer] = useState<Answer | null>(null)
@@ -45,6 +52,7 @@ export function App() {
   const [nowMs, setNowMs] = useState(() => Date.now())
 
   const settleTimer = useRef<number | null>(null)
+  const sourceTrigger = useRef<HTMLElement | null>(null)
 
   const refresh = useCallback(async (): Promise<void> => {
     const [folderList, engineStatus, privacyStatus, config] = await Promise.all([
@@ -60,6 +68,16 @@ export function App() {
     if (config.ok) setSettings(config.value)
     setNowMs(Date.now())
   }, [])
+
+  useEffect(() => {
+    if (theme === 'system') {
+      document.documentElement.removeAttribute('data-theme')
+      localStorage.removeItem('twigraph-theme')
+    } else {
+      document.documentElement.dataset.theme = theme
+      localStorage.setItem('twigraph-theme', theme)
+    }
+  }, [theme])
 
   useEffect(() => {
     void refresh()
@@ -154,8 +172,20 @@ export function App() {
     setBusy(false)
   }
 
+  const rememberSourceTrigger = (): void => {
+    sourceTrigger.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null
+  }
+
+  const closeSource = (): void => {
+    setSelected(null)
+    setActiveMarker(null)
+    window.setTimeout(() => sourceTrigger.current?.focus(), 0)
+  }
+
   const pickMarker = (marker: number): void => {
     if (answer === null) return
+    rememberSourceTrigger()
     if (activeMarker === marker) {
       setActiveMarker(null)
       setSelected(null)
@@ -170,6 +200,7 @@ export function App() {
   }
 
   const pickSource = (hit: Answer['sources'][number]): void => {
+    rememberSourceTrigger()
     setActiveMarker(null)
     setSelected({ hit, marker: null })
   }
@@ -196,6 +227,22 @@ export function App() {
   }
 
   const offline = privacy?.offline ?? false
+  const activeFolder = folders.find((folder) => folder.id === activeFolderId) ?? folders[0] ?? null
+  const phase = workspacePhase({ folders, activeFolderId, answer, result })
+  const canQuery = folders.some((folder) => folder.lastIndexedAtMs !== null)
+  const announcement = busy
+    ? mode === 'ask'
+      ? 'Building an answer.'
+      : 'Searching indexed files.'
+    : resultStatus({ answer, result })
+
+  const selectFolder = (folderId: string): void => {
+    setActiveFolderId(folderId)
+    setAnswer(null)
+    setResult(null)
+    setSelected(null)
+    setActiveMarker(null)
+  }
 
   return (
     <div className="app">
@@ -203,32 +250,46 @@ export function App() {
         folders={folders}
         nowMs={nowMs}
         indexingFolderId={indexingFolderId}
-        selectedFolderId={activeFolderId}
+        selectedFolderId={activeFolder?.id ?? null}
         settledFolderId={settledFolderId}
-        onSelect={setActiveFolderId}
+        onSelect={selectFolder}
         onAdd={() => void addFolder()}
         onIndex={(folderId) => void startIndex(folderId)}
         onCancel={() => void window.twigraph.index.cancel()}
         onRemove={(folderId) => void removeFolder(folderId)}
       />
 
-      <main className="pane canvas">
-        <div className="ask">
+      <main className="pane canvas" aria-busy={busy}>
+        <form
+          className="ask"
+          onSubmit={(event) => {
+            event.preventDefault()
+            void runQuery()
+          }}
+        >
+          <div className="ask__head">
+            <label htmlFor="query">Ask or search your indexed files</label>
+            <span id="mode-description">
+              {mode === 'ask'
+                ? 'Build an extractive answer with citations.'
+                : 'List matching passages by relevance.'}
+            </span>
+          </div>
           <div className="ask__row">
             <input
+              id="query"
               className="ask__input"
               type="text"
               value={query}
               placeholder={
-                mode === 'ask' ? 'Ask a question about your files' : 'Search your indexed files'
+                mode === 'ask'
+                  ? 'Example: How are indexes replaced safely?'
+                  : 'Example: atomic index writes'
               }
-              aria-label={mode === 'ask' ? 'Question' : 'Search query'}
+              aria-describedby="mode-description query-help"
               onChange={(event) => setQuery(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') void runQuery()
-              }}
             />
-            <div className="ask__modes" role="group" aria-label="What to do with the query">
+            <div className="ask__modes" role="group" aria-label="Query mode">
               <button
                 type="button"
                 className={`mode${mode === 'ask' ? ' mode--on' : ''}`}
@@ -246,86 +307,128 @@ export function App() {
                 Search
               </button>
             </div>
-            <button
-              type="button"
-              className="button button--primary"
-              disabled={busy || query.trim() === ''}
-              onClick={() => void runQuery()}
-            >
-              {busy ? 'Working…' : mode === 'ask' ? 'Ask' : 'Search'}
+            <button type="submit" className="button button--primary" disabled={busy || !canQuery}>
+              {mode === 'ask' ? 'Ask files' : 'Search files'}
             </button>
           </div>
+          <p id="query-help" className="ask__help">
+            {canQuery
+              ? 'Press Enter to run the query.'
+              : 'Add and index a folder before running a query.'}
+          </p>
+        </form>
+
+        <div className="sr-only" role="status" aria-live="polite">
+          {announcement}
         </div>
 
         {error === null ? null : (
           <div className="banner banner--error" role="alert">
-            <button
-              type="button"
-              className="banner__dismiss"
-              onClick={() => setError(null)}
-              aria-label="Dismiss"
-            >
+            <span>{error}</span>
+            <button type="button" className="button button--quiet" onClick={() => setError(null)}>
               Dismiss
             </button>
-            {error}
           </div>
         )}
 
         {notes.length === 0 ? null : (
-          <div className="notes">
-            <span className="notes__head">
+          <div className="notes" role="status">
+            <strong>
               {notes.length} file{notes.length === 1 ? '' : 's'} could not be read
-            </span>
+            </strong>
             {notes.map((note) => (
               <div key={note}>{note}</div>
             ))}
           </div>
         )}
 
-        {folders.length === 0 ? (
-          <div className="empty">
-            <p className="empty__title">Nothing is indexed yet</p>
-            <p className="empty__body">
-              Add a folder and twigraph reads it on this machine, writes an index beside its own
-              config, and answers only from what it found there. Nothing is uploaded and there is no
-              account to make.
-            </p>
-            <button
-              type="button"
-              className="button button--primary"
-              onClick={() => void addFolder()}
-            >
-              Add a folder
-            </button>
-          </div>
-        ) : answer !== null ? (
-          <AnswerLedger
-            answer={answer}
-            activeMarker={activeMarker}
-            activeChunkId={selected?.hit.chunkId ?? null}
-            onPickMarker={pickMarker}
-            onPickSource={pickSource}
-          />
-        ) : result !== null ? (
-          <SearchHits
-            hits={result.hits}
-            activeChunkId={selected?.hit.chunkId ?? null}
-            onPickSource={pickSource}
-          />
-        ) : (
-          <div className="empty">
-            <p className="empty__title">Ask about what you have indexed</p>
-            <p className="empty__body">
-              Ask a question and you get back the passages that answer it, each one traceable to the
-              file it came from. If nothing in your files is strong enough, twigraph says so instead
-              of guessing.
-            </p>
-          </div>
-        )}
+        <div className="canvas__content">
+          {phase === 'no-folders' ? (
+            <div className="workspace-state workspace-state--first-run">
+              <span className="workspace-state__step">Start here</span>
+              <h1>Bring one folder into view</h1>
+              <p>
+                twigraph builds a local index, answers only from what it finds, and keeps every
+                result connected to its source.
+              </p>
+              <ol>
+                <li>
+                  <span>1</span>Add a folder
+                </li>
+                <li>
+                  <span>2</span>Build its index
+                </li>
+                <li>
+                  <span>3</span>Ask and inspect sources
+                </li>
+              </ol>
+              <button
+                type="button"
+                className="button button--primary"
+                onClick={() => void addFolder()}
+              >
+                Add a folder
+              </button>
+              <small>Your files stay on this device. No account or upload.</small>
+            </div>
+          ) : phase === 'needs-index' && activeFolder !== null ? (
+            <div className="workspace-state">
+              <span className="workspace-state__step">Folder added</span>
+              <h1>Build the first index</h1>
+              <p>
+                <strong>{folderName(activeFolder.path)}</strong> is ready. Indexing reads supported
+                files and writes a searchable local index without changing the originals.
+              </p>
+              <button
+                type="button"
+                className="button button--primary"
+                onClick={() => void startIndex(activeFolder.id)}
+              >
+                Index this folder
+              </button>
+            </div>
+          ) : answer !== null ? (
+            <AnswerLedger
+              answer={answer}
+              activeMarker={activeMarker}
+              activeChunkId={selected?.hit.chunkId ?? null}
+              onPickMarker={pickMarker}
+              onPickSource={pickSource}
+            />
+          ) : result !== null ? (
+            <SearchHits
+              hits={result.hits}
+              activeChunkId={selected?.hit.chunkId ?? null}
+              onPickSource={pickSource}
+            />
+          ) : (
+            <div className="workspace-state">
+              <span className="workspace-state__step">Ready</span>
+              <h1>Ask what your files say</h1>
+              <p>
+                Use Ask for a concise extractive answer with citations, or Search to inspect ranked
+                passages directly.
+              </p>
+              <div className="workspace-state__examples">
+                <span>Try asking</span>
+                <button type="button" onClick={() => setQuery('How are indexes replaced safely?')}>
+                  How are indexes replaced safely?
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQuery('What happens when retrieval is weak?')}
+                >
+                  What happens when retrieval is weak?
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </main>
 
       <SourceInspector
         source={selected}
+        onClose={closeSource}
         onOpen={(absolutePath) => void openSource(absolutePath)}
         onReveal={(absolutePath) => void revealSource(absolutePath)}
       />
@@ -336,7 +439,9 @@ export function App() {
         settings={settings}
         progress={progress}
         offline={offline}
+        theme={theme}
         onSetOffline={(value) => void setOffline(value)}
+        onSetTheme={setTheme}
       />
     </div>
   )

@@ -176,7 +176,30 @@ const PROBE = `(async () => {
     canvas: box('.canvas'),
     inspector: box('.pane--inspector'),
     status: box('.status'),
+    documentOverflow: document.documentElement.scrollWidth > window.innerWidth,
   }
+
+  const query = document.querySelector('#query')
+  const queryLabel = query?.labels?.[0]?.textContent?.trim() ?? null
+  const folderSelector = document.querySelector('.folder__select')
+  const folderActions = [...document.querySelectorAll('.folder__actions button')].map((button) => ({
+    text: button.textContent?.trim() ?? '',
+    visible: getComputedStyle(button).visibility !== 'hidden' && getComputedStyle(button).display !== 'none',
+  }))
+  const source = document.querySelector('[data-source-inspector]')
+  const sourceText = source?.textContent ?? ''
+
+  const settingsTrigger = [...document.querySelectorAll('.status button')].find((button) =>
+    button.textContent?.includes('Settings and privacy'),
+  )
+  settingsTrigger?.click()
+  await new Promise((resolve) => setTimeout(resolve, 50))
+  const dialog = document.querySelector('dialog.settings')
+  const dialogOpen = dialog?.open === true
+  const dialogFocused = dialog?.contains(document.activeElement) === true
+  dialog?.querySelector('button')?.click()
+  await new Promise((resolve) => setTimeout(resolve, 50))
+  const dialogFocusReturned = document.activeElement === settingsTrigger
 
   // The answer, if one was asked for: the ledger is the whole idea of the window, so a count of
   // its lines and markers is worth asserting on.
@@ -190,7 +213,7 @@ const PROBE = `(async () => {
   const privacy = await api.privacy.status()
   const folders = await api.folders.list()
 
-  return {
+  return JSON.stringify({
     apiGroups: Object.keys(api).sort(),
     eventListeners: Object.keys(api.on).sort(),
     mountedNodes: root === null ? -1 : root.querySelectorAll('*').length,
@@ -199,9 +222,18 @@ const PROBE = `(async () => {
     policyViolations,
     layout,
     ledger,
+    semantics: {
+      queryLabel,
+      folderSelectorTag: folderSelector?.tagName ?? null,
+      folderActions,
+      sourceText,
+      dialogOpen,
+      dialogFocused,
+      dialogFocusReturned,
+    },
     privacy,
     folders,
-  }
+  })
 })()`
 
 /**
@@ -225,6 +257,8 @@ async function driveOneAsk(window) {
     `document.querySelector('.ask .button--primary').click()`,
   )
   await new Promise((resolve) => setTimeout(resolve, 700))
+  await window.webContents.executeJavaScript(`document.querySelector('.ledger__marker')?.click()`)
+  await new Promise((resolve) => setTimeout(resolve, 150))
 }
 
 // Chromium keeps its disk cache under `userData`. A development copy of the app may be running
@@ -266,15 +300,42 @@ app
     try {
       await window.loadFile(join(DIST, 'renderer', 'index.html'))
 
+      if (
+        process.env.TWIGRAPH_SMOKE_THEME === 'light' ||
+        process.env.TWIGRAPH_SMOKE_THEME === 'dark'
+      ) {
+        await window.webContents.executeJavaScript(
+          `document.documentElement.dataset.theme = ${JSON.stringify(process.env.TWIGRAPH_SMOKE_THEME)}`,
+        )
+      }
+
       if (SHOT !== undefined) {
+        process.stdout.write('STAGE drive\n')
         await driveOneAsk(window)
+        process.stdout.write('STAGE capture\n')
         const image = await window.webContents.capturePage()
         await writeFile(SHOT, image.toPNG())
         process.stdout.write(`SHOT ${SHOT}\n`)
       }
 
-      const observed = await window.webContents.executeJavaScript(PROBE)
+      process.stdout.write('STAGE probe\n')
+      const observed = JSON.parse(await window.webContents.executeJavaScript(PROBE))
       process.stdout.write(`PROBE ${JSON.stringify(observed)}\n`)
+
+      window.setSize(880, 600)
+      await new Promise((resolve) => setTimeout(resolve, 150))
+      const compact = await window.webContents.executeJavaScript(`(() => {
+        const inspector = document.querySelector('[data-source-inspector]')
+        const rect = inspector?.getBoundingClientRect()
+        return {
+          viewport: { width: window.innerWidth, height: window.innerHeight },
+          columns: getComputedStyle(document.querySelector('.app')).gridTemplateColumns,
+          inspectorPosition: inspector === null ? null : getComputedStyle(inspector).position,
+          inspectorVisible: rect === undefined ? false : rect.right <= window.innerWidth && rect.left >= 0,
+          documentOverflow: document.documentElement.scrollWidth > window.innerWidth,
+        }
+      })()`)
+      process.stdout.write(`COMPACT ${JSON.stringify(compact)}\n`)
       process.stdout.write(`CALLS ${JSON.stringify([...calls].sort())}\n`)
       app.exit(0)
     } catch (error) {

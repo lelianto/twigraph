@@ -1,25 +1,43 @@
+document.documentElement.classList.add('js')
+
 const header = document.querySelector('[data-header]')
 const menuButton = document.querySelector('[data-menu-button]')
 const navLinks = document.querySelector('#nav-links')
 const copyButton = document.querySelector('[data-copy]')
+const copyStatus = document.querySelector('[data-copy-status]')
 const command = document.querySelector('[data-command]')
 
 const updateHeader = () => header?.classList.toggle('is-scrolled', window.scrollY > 20)
+const closeMenu = (restoreFocus = false) => {
+  menuButton?.setAttribute('aria-expanded', 'false')
+  menuButton?.setAttribute('aria-label', 'Open navigation')
+  navLinks?.classList.remove('is-open')
+  if (restoreFocus) menuButton?.focus()
+}
+
 updateHeader()
 window.addEventListener('scroll', updateHeader, { passive: true })
 
 menuButton?.addEventListener('click', () => {
   const open = menuButton.getAttribute('aria-expanded') !== 'true'
-  menuButton.setAttribute('aria-expanded', String(open))
-  menuButton.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation')
-  navLinks?.classList.toggle('is-open', open)
+  if (!open) {
+    closeMenu()
+    return
+  }
+  menuButton.setAttribute('aria-expanded', 'true')
+  menuButton.setAttribute('aria-label', 'Close navigation')
+  navLinks?.classList.add('is-open')
+  navLinks?.querySelector('a')?.focus()
+})
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && menuButton?.getAttribute('aria-expanded') === 'true') {
+    closeMenu(true)
+  }
 })
 
 navLinks?.querySelectorAll('a').forEach((link) => {
-  link.addEventListener('click', () => {
-    menuButton?.setAttribute('aria-expanded', 'false')
-    navLinks.classList.remove('is-open')
-  })
+  link.addEventListener('click', () => closeMenu())
 })
 
 copyButton?.addEventListener('click', async () => {
@@ -27,9 +45,13 @@ copyButton?.addEventListener('click', async () => {
   try {
     await navigator.clipboard.writeText(command.textContent)
     copyButton.textContent = 'Copied'
-    window.setTimeout(() => (copyButton.textContent = 'Copy'), 1600)
+    if (copyStatus) copyStatus.textContent = 'Commands copied to the clipboard.'
+    window.setTimeout(() => {
+      copyButton.textContent = 'Copy commands'
+    }, 1600)
   } catch {
-    copyButton.textContent = 'Select text to copy'
+    copyButton.textContent = 'Select the commands'
+    if (copyStatus) copyStatus.textContent = 'Copy was unavailable. Select the commands manually.'
   }
 })
 
