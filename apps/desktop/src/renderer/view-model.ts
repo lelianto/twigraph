@@ -1,0 +1,156 @@
+import { formatCitationLabel, formatHeadingPath, formatPageRange } from '@twigraph/shared/citations'
+import type { FolderSummary, IndexProgressEvent } from '@twigraph/shared/ipc'
+import type { Answer, Citation, SearchHit } from '@twigraph/shared'
+
+/**
+ * Everything the window shows, as plain functions.
+ *
+ * Keeping the formatting out of the components is what makes it testable without a DOM: the
+ * `.tsx` files decide where things go, these decide what they say.
+ */
+
+export interface AnswerLine {
+  readonly text: string
+  /**
+   * The markers this line cites, in the order they appear. A line can draw on more than one
+   * source, and the first one is the one the judge would call the primary.
+   */
+  readonly markers: readonly number[]
+}
+
+const PASSAGE_BREAK = /\n{2,}/
+const MARKER_SCAN = /\[(\d+)\]/g
+const MARKER_STRIP = /\[(\d+)\]/g
+const SPACE_BEFORE_PUNCTUATION = /\s+([.,;:!?])/g
+const RUN_OF_SPACES = /\s{2,}/g
+
+/**
+ * Splits an answer into the lines it should be drawn on, with the markers pulled out.
+ *
+ * The markers are lifted out of the sentence rather than left inline because the window shows
+ * them as a thread to the source, not as text. `[docs]` is left alone: only digits are markers.
+ */
+export function answerLines(text: string): readonly AnswerLine[] {
+  return text
+    .split(PASSAGE_BREAK)
+    .map((line) => line.trim())
+    .filter((line) => line !== '')
+    .map((line) => {
+      const markers: number[] = []
+      for (const match of line.matchAll(MARKER_SCAN)) {
+        const marker = Number(match[1])
+        if (!markers.includes(marker)) markers.push(marker)
+      }
+
+      return {
+        text: line
+          .replace(MARKER_STRIP, '')
+          .replace(SPACE_BEFORE_PUNCTUATION, '$1')
+          .replace(RUN_OF_SPACES, ' ')
+          .trim(),
+        markers,
+      }
+    })
+}
+
+/** The source a marker points at, or nothing when the marker is not a real one. */
+export function citationFor(answer: Answer, marker: number): Citation | undefined {
+  return answer.citations.find((citation) => citation.marker === marker)
+}
+
+export function citationLabel(citation: Citation): string {
+  return formatCitationLabel(citation)
+}
+
+/** A search hit has a location but no marker yet: the marker is assigned when it is cited. */
+export function hitHeading(hit: SearchHit): string | null {
+  return formatHeadingPath(hit.headingPath)
+}
+
+export function hitPageRange(hit: SearchHit): string | null {
+  return formatPageRange(hit)
+}
+
+export function formatScore(score: number): string {
+  return score.toFixed(2)
+}
+
+/**
+ * The last segment of a path, for a label a person can scan.
+ *
+ * Windows is the only platform this ships on, but both separators are accepted so a path that
+ * arrived from either side of a copy-paste still reads correctly.
+ */
+export function folderName(path: string): string {
+  const parts = path.split(/[\\/]/).filter((part) => part !== '')
+  return parts[parts.length - 1] ?? path
+}
+
+export function formatBytes(bytes: number): string {
+  const safe = Math.max(0, bytes)
+  if (safe < 1024) return `${Math.round(safe)} B`
+
+  const units = ['KB', 'MB', 'GB', 'TB']
+  let value = safe
+  let unit = -1
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024
+    unit += 1
+  }
+  return `${value.toFixed(1)} ${units[unit] ?? 'KB'}`
+}
+
+/**
+ * What a folder row says about its index.
+ *
+ * "Indexed, but nothing readable" is a different fact from "not indexed yet", and an index of
+ * nothing that reports a byte count would hide which of the two happened.
+ */
+export function folderStateLine(folder: FolderSummary): string {
+  if (folder.lastIndexedAtMs === null) return 'Not indexed yet'
+  if (folder.documentCount === 0) return 'Indexed, but nothing in it could be read'
+
+  const parts = [
+    `${folder.documentCount} document${folder.documentCount === 1 ? '' : 's'}`,
+    `${folder.chunkCount} chunk${folder.chunkCount === 1 ? '' : 's'}`,
+  ]
+  if (folder.failedCount > 0) parts.push(`${folder.failedCount} unreadable`)
+  parts.push(formatBytes(folder.indexSizeBytes))
+  return parts.join('  ')
+}
+
+const MINUTE_MS = 60_000
+const HOUR_MS = 60 * MINUTE_MS
+const DAY_MS = 24 * HOUR_MS
+const OLD_ENOUGH_FOR_A_DATE = 30 * DAY_MS
+
+/** `null` means the folder has never been indexed, which is a different thing from "long ago". */
+export function formatWhen(atMs: number | null, nowMs: number): string {
+  if (atMs === null) return 'Not indexed yet'
+
+  const elapsed = nowMs - atMs
+  if (elapsed < MINUTE_MS) return 'Just now'
+  if (elapsed < HOUR_MS) {
+    const minutes = Math.floor(elapsed / MINUTE_MS)
+    return `${minutes} minute${minutes === 1 ? '' : 's'} ago`
+  }
+  if (elapsed < DAY_MS) {
+    const hours = Math.floor(elapsed / HOUR_MS)
+    return `${hours} hour${hours === 1 ? '' : 's'} ago`
+  }
+  if (elapsed < OLD_ENOUGH_FOR_A_DATE) {
+    const days = Math.floor(elapsed / DAY_MS)
+    return `${days} day${days === 1 ? '' : 's'} ago`
+  }
+  return new Date(atMs).toISOString().slice(0, 10)
+}
+
+/**
+ * One line for the status bar. It names the file being read and never anything inside it.
+ */
+export function describeIndexProgress(progress: IndexProgressEvent): string {
+  const counted = `${progress.documentsProcessed} of ${progress.documentsTotal}`
+  return progress.currentFile === null
+    ? `Writing the index — ${counted}`
+    : `Reading ${progress.currentFile} — ${counted}`
+}

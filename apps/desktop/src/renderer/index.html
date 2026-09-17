@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!--
+      The renderer's whole world. `default-src 'none'` with `connect-src 'none'` is what makes
+      "this window cannot reach the network" a property of the page rather than a promise: a
+      request from here fails, whoever writes the code that tries it.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>twigraph</title>
+    <link rel="stylesheet" href="app.css" />
+    <script src="renderer.js" defer></script>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

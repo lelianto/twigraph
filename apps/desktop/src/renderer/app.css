@@ -1,0 +1,714 @@
+/*
+ * twigraph desktop.
+ *
+ * The palette is the one the project already uses, because a window that did not match the
+ * product's own page would be the wrong kind of consistency to keep. What is different here
+ * is the structure: this is a working tool, so nothing is decorative. Amber is reserved for
+ * one meaning — text that is not backed by a source — and green means grounded.
+ */
+
+:root {
+  color-scheme: dark;
+
+  --bg: #07110d;
+  --panel: #0c1812;
+  --panel-2: #101f17;
+  --line: rgba(204, 236, 213, 0.14);
+  --line-strong: rgba(204, 236, 213, 0.26);
+  --text: #f3f7ef;
+  --muted: #a4b3a7;
+  --quiet: #7f9183;
+  --green: #b8f34b;
+  --green-soft: #79b86f;
+  --amber: #ffc21c;
+  --danger: #e2604d;
+
+  --sans: Inter, ui-sans-serif, system-ui, 'Segoe UI', sans-serif;
+  --mono: Consolas, 'SFMono-Regular', 'Liberation Mono', monospace;
+
+  --rail: 236px;
+  --inspector: 336px;
+  --radius: 3px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 400 14px/1.55 var(--sans);
+  overflow: hidden;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+input {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(204, 236, 213, 0.14);
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(204, 236, 213, 0.26);
+  background-clip: content-box;
+}
+
+/* ── the frame ─────────────────────────────────────────────────────────────── */
+
+.app {
+  display: grid;
+  grid-template-columns: var(--rail) minmax(0, 1fr) var(--inspector);
+  grid-template-rows: minmax(0, 1fr) auto;
+  height: 100vh;
+}
+
+.pane {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.pane--rail {
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+}
+
+.pane--inspector {
+  background: var(--panel);
+  border-left: 1px solid var(--line);
+}
+
+.pane__title {
+  margin: 0;
+  padding: 18px 16px 10px;
+  font-size: 13px;
+  font-weight: 620;
+  letter-spacing: 0.01em;
+}
+
+/* ── buttons ───────────────────────────────────────────────────────────────── */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  font-size: 12.5px;
+  font-weight: 560;
+  white-space: nowrap;
+}
+.button:hover {
+  border-color: var(--green-soft);
+}
+.button--primary {
+  background: var(--green);
+  border-color: var(--green);
+  color: #07110d;
+}
+.button--primary:hover {
+  background: #c6ff5e;
+}
+.button--quiet {
+  border-color: transparent;
+  color: var(--muted);
+}
+.button--quiet:hover {
+  border-color: var(--line-strong);
+  color: var(--text);
+}
+.button--danger {
+  border-color: transparent;
+  color: var(--muted);
+}
+.button--danger:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+.button--wide {
+  width: 100%;
+}
+.button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* ── the folder rail ───────────────────────────────────────────────────────── */
+
+.rail__brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid var(--line);
+  font-weight: 640;
+}
+.rail__brand span {
+  font-size: 13.5px;
+  letter-spacing: -0.01em;
+}
+.rail__mark {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+.rail__list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px 8px 12px;
+}
+
+.folder {
+  position: relative;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  padding: 9px 10px 10px;
+  cursor: pointer;
+}
+.folder + .folder {
+  margin-top: 2px;
+}
+.folder:hover {
+  background: var(--panel-2);
+}
+.folder--on {
+  background: var(--panel-2);
+  border-color: var(--line-strong);
+}
+.folder--indexing {
+  border-color: var(--green-soft);
+}
+.folder__name {
+  display: block;
+  font-size: 13px;
+  font-weight: 580;
+  overflow-wrap: anywhere;
+}
+.folder__path {
+  display: block;
+  margin-top: 2px;
+  font: 400 10.5px/1.45 var(--mono);
+  color: var(--quiet);
+  /* One line: a Windows path wraps to three and buries the counts underneath it. The full
+     path is on the row's title attribute instead. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.folder__state {
+  display: block;
+  margin-top: 7px;
+  font: 400 11px/1.4 var(--mono);
+  color: var(--muted);
+}
+.folder__state--warn {
+  color: var(--amber);
+}
+.folder__actions {
+  display: flex;
+  gap: 2px;
+  margin-top: 6px;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+.folder:hover .folder__actions,
+.folder--on .folder__actions,
+.folder__actions:focus-within {
+  opacity: 1;
+}
+
+.rail__foot {
+  padding: 10px 12px 14px;
+  border-top: 1px solid var(--line);
+}
+
+/* ── the query bar ─────────────────────────────────────────────────────────── */
+
+.canvas {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.ask {
+  padding: 16px 20px 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.ask__row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.ask__input {
+  flex: 1;
+  min-width: 0;
+  height: 38px;
+  padding: 0 12px;
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+}
+.ask__input::placeholder {
+  color: var(--quiet);
+}
+.ask__input:focus {
+  border-color: var(--green-soft);
+  outline: none;
+}
+
+.ask__modes {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.mode {
+  min-height: 30px;
+  padding: 0 11px;
+  border-radius: 2px;
+  font-size: 12.5px;
+  font-weight: 560;
+  color: var(--muted);
+}
+.mode--on {
+  background: var(--panel-2);
+  color: var(--text);
+}
+
+/* ── the evidence ledger ───────────────────────────────────────────────────── */
+
+.ledger {
+  padding: 20px 20px 26px;
+}
+
+.ledger__summary {
+  margin: 0 0 18px;
+  font: 400 11.5px/1.5 var(--mono);
+  color: var(--quiet);
+}
+
+.ledger__line {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  align-items: start;
+}
+.ledger__line + .ledger__line {
+  margin-top: 12px;
+}
+
+/* Selecting one marker leaves that thread and its source at full strength and quietens the
+   rest, which is the whole point of the layout: an answer is only as good as the line back
+   to the file it came from. */
+.ledger--picking .ledger__line:not(.ledger__line--on) {
+  opacity: 0.4;
+}
+
+.ledger__gutter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  align-self: stretch;
+  padding-top: 1px;
+}
+
+.ledger__marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 20px;
+  padding: 0 5px;
+  border: 1px solid var(--line-strong);
+  border-radius: 2px;
+  font: 600 11px/1 var(--mono);
+  color: var(--muted);
+}
+.ledger__marker:hover {
+  border-color: var(--green-soft);
+  color: var(--text);
+}
+.ledger__marker--on {
+  background: var(--green);
+  border-color: var(--green);
+  color: #07110d;
+}
+
+.ledger__thread {
+  flex: 1;
+  width: 1px;
+  min-height: 10px;
+  margin-top: 5px;
+  background: var(--line-strong);
+}
+.ledger__line--on .ledger__thread {
+  background: var(--green);
+}
+
+.ledger__text {
+  margin: 0;
+  padding-bottom: 2px;
+  max-width: 68ch;
+}
+
+.ledger__ungrounded {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 194, 28, 0.4);
+  border-radius: var(--radius);
+  background: rgba(255, 194, 28, 0.06);
+  font-size: 13px;
+}
+.ledger__ungrounded strong {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--amber);
+  font-weight: 600;
+}
+
+.ledger__note {
+  margin: 0 0 16px;
+  padding: 9px 12px;
+  border-left: 2px solid var(--amber);
+  background: rgba(255, 194, 28, 0.05);
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+/* ── ranked hits ───────────────────────────────────────────────────────────── */
+
+.hits {
+  padding: 14px 20px 26px;
+}
+
+.hit {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 12px;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  text-align: left;
+}
+.hit + .hit {
+  margin-top: 2px;
+}
+.hit:hover {
+  background: var(--panel-2);
+}
+.hit--on {
+  background: var(--panel-2);
+  border-color: var(--line-strong);
+}
+.hit__score {
+  font: 400 12px/1.5 var(--mono);
+  color: var(--green-soft);
+}
+.hit__name {
+  font-weight: 580;
+  font-size: 13px;
+}
+.hit__where {
+  display: block;
+  margin-top: 1px;
+  font: 400 11px/1.45 var(--mono);
+  color: var(--quiet);
+}
+.hit__excerpt {
+  display: block;
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.6;
+  max-width: 72ch;
+}
+
+/* ── the source inspector ──────────────────────────────────────────────────── */
+
+.inspector {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.inspector__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 16px 16px;
+}
+
+.inspector__name {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 620;
+  overflow-wrap: anywhere;
+}
+
+.inspector__where {
+  margin: 4px 0 0;
+  font: 400 11px/1.5 var(--mono);
+  color: var(--green-soft);
+}
+
+.inspector__path {
+  margin: 8px 0 0;
+  font: 400 10.5px/1.5 var(--mono);
+  color: var(--quiet);
+  overflow-wrap: anywhere;
+}
+
+.inspector__text {
+  margin: 14px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  color: #cdd8ce;
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.inspector__actions {
+  display: flex;
+  gap: 6px;
+  padding: 12px 16px 16px;
+  border-top: 1px solid var(--line);
+}
+
+/* ── empty and error states ────────────────────────────────────────────────── */
+
+.empty {
+  padding: 26px 20px;
+  color: var(--muted);
+}
+.empty__title {
+  margin: 0 0 6px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+}
+.empty__body {
+  margin: 0 0 14px;
+  max-width: 56ch;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.banner {
+  margin: 14px 20px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  font-size: 12.5px;
+}
+.banner--error {
+  border-color: rgba(226, 96, 77, 0.5);
+  background: rgba(226, 96, 77, 0.08);
+}
+.banner__dismiss {
+  float: right;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.notes {
+  margin: 14px 20px 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font: 400 11.5px/1.7 var(--mono);
+  color: var(--muted);
+  max-height: 116px;
+  overflow-y: auto;
+}
+.notes__head {
+  color: var(--amber);
+  font-weight: 600;
+}
+
+/* ── the status bar ────────────────────────────────────────────────────────── */
+
+.status {
+  position: relative;
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 34px;
+  padding: 0 14px;
+  background: var(--panel-2);
+  border-top: 1px solid var(--line);
+  font: 400 11.5px/1 var(--mono);
+  color: var(--muted);
+}
+
+.status__spacer {
+  flex: 1;
+  min-width: 0;
+}
+
+.status__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text);
+}
+
+.status__dot {
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--green);
+}
+.status__dot--off {
+  background: var(--quiet);
+}
+.status__dot--busy {
+  background: var(--amber);
+}
+
+.status__path {
+  max-width: 34ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--quiet);
+}
+
+/* The run in progress, drawn along the top edge of the bar: it reads as one line that fills
+   up rather than as a widget asking for attention. */
+.progress {
+  position: absolute;
+  inset: -1px 0 auto;
+  height: 1px;
+  background: rgba(204, 236, 213, 0.1);
+}
+.progress__fill {
+  height: 100%;
+  background: var(--green);
+}
+
+.settings {
+  position: absolute;
+  right: 10px;
+  bottom: 40px;
+  width: 340px;
+  padding: 14px 16px 16px;
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  font-family: var(--sans);
+  color: var(--text);
+}
+.settings__title {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 620;
+}
+.settings__row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 7px 0;
+  border-top: 1px solid var(--line);
+}
+.settings__row:first-of-type {
+  border-top: none;
+}
+.settings__label {
+  flex: none;
+  width: 106px;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+.settings__value {
+  flex: 1;
+  min-width: 0;
+  font: 400 11.5px/1.5 var(--mono);
+  overflow-wrap: anywhere;
+}
+.settings__value--off {
+  color: var(--amber);
+}
+.settings__note {
+  margin: 12px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  color: var(--quiet);
+  font-size: 11.5px;
+  line-height: 1.6;
+}
+
+/* ── the one moment of motion ──────────────────────────────────────────────── */
+
+@keyframes settle {
+  from {
+    color: var(--green);
+  }
+  to {
+    color: var(--muted);
+  }
+}
+
+.folder__state--settle {
+  animation: settle 900ms ease-out 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* A narrower window loses margin before it loses anything useful: the panes get smaller
+   rather than disappearing, because the source inspector is the point of the app. */
+@media (max-width: 1120px) {
+  :root {
+    --rail: 206px;
+    --inspector: 282px;
+  }
+}

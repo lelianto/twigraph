@@ -48,8 +48,10 @@
     "fixture:generate": "node fixtures/generate.mjs",
     "twigraph": "tsx apps/cli/src/main.ts",
     "twigraph:mcp": "tsx apps/mcp/src/main.ts",
+    "desktop": "node scripts/build-desktop.mjs && electron apps/desktop/dist/main.cjs",
     "build:cli": "node scripts/build-cli.mjs",
     "build:mcp": "node scripts/build-mcp.mjs",
+    "build:desktop": "node scripts/build-desktop.mjs",
     "build": "npm run build:cli && npm run build:mcp",
     "prepack": "npm run build",
     "verify": "npm run typecheck && npm run lint && npm run test"
