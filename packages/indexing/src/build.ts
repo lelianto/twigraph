@@ -5,7 +5,7 @@ import type {
   ScannedFile,
   VersionedParser,
 } from '@twigraph/document-ingestion'
-import { isTwigraphError } from '@twigraph/shared'
+import { TwigraphError, isTwigraphError } from '@twigraph/shared'
 import type {
   ChunkRecord,
   DocumentFailure,
@@ -36,6 +36,12 @@ export interface BuildIndexOptions {
   readonly chunking: ChunkingOptions
   readonly scan?: ScanOptions
   readonly onProgress?: (progress: BuildProgress) => void
+  /**
+   * Cooperative cancellation. Checked before the scan and at every file boundary, so a
+   * cancelled run stops between documents: never mid-file, and never after the new index
+   * has begun to be put in place.
+   */
+  readonly signal?: AbortSignal
 }
 
 export interface BuildIndexResult {
@@ -73,6 +79,19 @@ function failedRecord(
 }
 
 /**
+ * Stops a cancelled run where it is safe to stop.
+ *
+ * `replaceIndex` is what creates the staging directory, so throwing before it is reached is
+ * what guarantees a cancelled run leaves the previous index exactly as it was. A half-built
+ * index would be worse than the one the user already has.
+ */
+function throwIfAborted(signal: AbortSignal | undefined): void {
+  if (signal?.aborted === true) {
+    throw new TwigraphError('CANCELLED', 'The indexing run was cancelled')
+  }
+}
+
+/**
  * Reads a folder and writes its index.
  *
  * A parser that reports a failure against one file never stops the run: the file is
@@ -84,12 +103,42 @@ export async function buildIndex(
   options: BuildIndexOptions,
 ): Promise<BuildIndexResult> {
   const registry = createParserRegistry(defaultParsers())
-  const { folderId, folderPath, nowMs, chunking, onProgress } = options
+  const { folderId, folderPath, nowMs, chunking, onProgress, signal } = options
+
+  throwIfAborted(signal)
 
   const scan = await scanFolder(folderPath, {
     ...options.scan,
     supportedExtensions: registry.extensions,
   })
+
+  const previousDocs = new Map<string, DocumentRecord>()
+  const previousChunksByDocId = new Map<string, ChunkRecord[]>()
+  let previousManifest: IndexManifest | null = null
+
+  try {
+    const [manifest, existingDocs, existingChunks] = await Promise.all([
+      data.store.readManifest(folderId),
+      data.store.readDocuments(folderId),
+      data.store.readChunks(folderId),
+    ])
+    previousManifest = manifest
+    for (const doc of existingDocs) {
+      if (doc.status === 'indexed') {
+        previousDocs.set(doc.relativePath, doc)
+      }
+    }
+    for (const chunk of existingChunks) {
+      let list = previousChunksByDocId.get(chunk.documentId)
+      if (list === undefined) {
+        list = []
+        previousChunksByDocId.set(chunk.documentId, list)
+      }
+      list.push(chunk)
+    }
+  } catch {
+    // If the existing index is corrupt or unreadable, start fresh
+  }
 
   const documents: DocumentRecord[] = []
   const chunks: ChunkRecord[] = []
@@ -109,6 +158,7 @@ export async function buildIndex(
   report(null)
 
   for (const file of scan.files) {
+    throwIfAborted(signal)
     processed += 1
     const parser: VersionedParser | null = registry.forExtension(file.extension)
     const documentId = documentIdFor(folderId, file.relativePath)
@@ -122,6 +172,28 @@ export async function buildIndex(
         code: 'PARSE_UNSUPPORTED_FORMAT',
         message: 'No parser claims this file type',
       })
+      report(file.relativePath)
+      continue
+    }
+
+    const cachedDoc = previousDocs.get(file.relativePath)
+    const cachedChunks = previousChunksByDocId.get(documentId)
+    const parserMatches =
+      previousManifest !== null && previousManifest.parserVersions[parser.id] === parser.version
+
+    if (
+      parserMatches &&
+      cachedDoc !== undefined &&
+      cachedChunks !== undefined &&
+      cachedDoc.contentHash === file.contentHash &&
+      cachedDoc.sizeBytes === file.sizeBytes &&
+      cachedDoc.chunkCount === cachedChunks.length
+    ) {
+      documents.push({
+        ...cachedDoc,
+        modifiedAtMs: file.modifiedAtMs,
+      })
+      chunks.push(...cachedChunks)
       report(file.relativePath)
       continue
     }

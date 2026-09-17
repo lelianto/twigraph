@@ -51,7 +51,7 @@ describe('building an index from a folder', () => {
     expect(result.manifest.documentCount).toBe(11)
     expect(result.manifest.failedCount).toBe(3)
     expect(result.manifest.chunkCount).toBeGreaterThan(10)
-    expect(result.manifest.parserVersions).toEqual({ markdown: '1', text: '1' })
+    expect(result.manifest.parserVersions).toEqual({ html: '1', markdown: '1', text: '1' })
     expect(result.manifest.builtAtMs).toBe(NOW)
     expect(result.manifest.embedding).toBeNull()
   })
@@ -157,6 +157,26 @@ describe('building an index from a folder', () => {
     expect(await data.store.readChunks(FOLDER_ID)).toEqual(first)
   })
 
+  it('updates modified file during incremental re-indexing', async () => {
+    await build()
+    const initialDocs = await data.store.readDocuments(FOLDER_ID)
+    const targetDoc = initialDocs.find((doc) => doc.relativePath === 'notes/retrieval.md')
+    expect(targetDoc).toBeDefined()
+
+    // Modify the file
+    const { writeFile } = await import('node:fs/promises')
+    await writeFile(join(root, 'notes/retrieval.md'), '# Updated Heading\n\nBrand new content.')
+
+    await build()
+    const updatedDocs = await data.store.readDocuments(FOLDER_ID)
+    const updatedTarget = updatedDocs.find((doc) => doc.relativePath === 'notes/retrieval.md')
+    expect(updatedTarget?.contentHash).not.toBe(targetDoc?.contentHash)
+
+    const updatedChunks = await data.store.readChunks(FOLDER_ID)
+    const newDocChunk = updatedChunks.find((chunk) => chunk.documentId === targetDoc?.id)
+    expect(newDocChunk?.text).toContain('Brand new content.')
+  })
+
   it('touches no network at all', async () => {
     const guard = installNetworkGuard({ mode: 'offline' })
     try {
@@ -175,5 +195,66 @@ describe('building an index from a folder', () => {
     expect(await data.store.readManifest(FOLDER_ID)).toBeNull()
     expect(await data.store.readChunks(FOLDER_ID)).toEqual([])
     await expect(data.store.sizeBytes(FOLDER_ID)).resolves.toBe(0)
+  })
+})
+
+describe('cancelling a run', () => {
+  it('refuses to start when the signal is already aborted', async () => {
+    const controller = new AbortController()
+    controller.abort()
+
+    await expect(build({ signal: controller.signal })).rejects.toMatchObject({ code: 'CANCELLED' })
+  })
+
+  it('leaves no index behind when a first run is cancelled', async () => {
+    const controller = new AbortController()
+    controller.abort()
+
+    await expect(build({ signal: controller.signal })).rejects.toMatchObject({ code: 'CANCELLED' })
+    expect(await data.store.readManifest(FOLDER_ID)).toBeNull()
+  })
+
+  it('stops at a file boundary rather than walking the whole folder', async () => {
+    const controller = new AbortController()
+    const seen: BuildProgress[] = []
+
+    await expect(
+      build({
+        signal: controller.signal,
+        onProgress: (progress) => {
+          seen.push(progress)
+          if (progress.documentsProcessed === 3) controller.abort()
+        },
+      }),
+    ).rejects.toMatchObject({ code: 'CANCELLED' })
+
+    expect(seen.at(-1)?.documentsProcessed).toBe(3)
+    expect(seen.length).toBeLessThan(11)
+  })
+
+  it('leaves the index the user already had exactly as it was', async () => {
+    await build()
+    const before = await chunkFileOf()
+    const chunksBefore = await data.store.readChunks(FOLDER_ID)
+
+    const controller = new AbortController()
+    await expect(
+      build({
+        signal: controller.signal,
+        onProgress: (progress) => {
+          if (progress.documentsProcessed === 3) controller.abort()
+        },
+      }),
+    ).rejects.toMatchObject({ code: 'CANCELLED' })
+
+    expect(await chunkFileOf()).toBe(before)
+    expect(await data.store.readChunks(FOLDER_ID)).toEqual(chunksBefore)
+  })
+
+  it('runs to completion when the signal never fires', async () => {
+    const controller = new AbortController()
+    const result = await build({ signal: controller.signal })
+
+    expect(result.manifest.documentCount).toBe(11)
   })
 })
