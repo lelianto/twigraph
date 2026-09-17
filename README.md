@@ -156,8 +156,8 @@ is the source of truth for the checkout you are working with.
 ### Get started
 
 ```bash
-git clone https://github.com/lelianto/mulat.git
-cd mulat
+git clone https://github.com/lelianto/twigraph.git
+cd twigraph
 npm install --include=dev
 npm run verify
 ```
