@@ -54,6 +54,7 @@
     "build:desktop": "node scripts/build-desktop.mjs",
     "build": "npm run build:cli && npm run build:mcp",
     "prepack": "npm run build",
+    "serve": "node scripts/serve-landing.mjs",
     "verify": "npm run typecheck && npm run lint && npm run test"
   },
   "devDependencies": {

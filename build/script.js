@@ -1,5 +1,33 @@
 document.documentElement.classList.add('js')
 
+// Theme switcher (light / dark mode)
+const themeToggles = document.querySelectorAll('[data-theme-toggle]')
+const savedTheme = localStorage.getItem('twigraph-theme')
+const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+let currentTheme = savedTheme || (systemDark ? 'dark' : 'light')
+
+const applyTheme = (theme) => {
+  currentTheme = theme
+  document.documentElement.setAttribute('data-theme', theme)
+  localStorage.setItem('twigraph-theme', theme)
+  themeToggles.forEach((btn) => {
+    btn.setAttribute(
+      'aria-label',
+      theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode',
+    )
+  })
+}
+
+applyTheme(currentTheme)
+
+themeToggles.forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const nextTheme = currentTheme === 'dark' ? 'light' : 'dark'
+    applyTheme(nextTheme)
+  })
+})
+
+// Header & Navigation elements
 const header = document.querySelector('[data-header]')
 const menuButton = document.querySelector('[data-menu-button]')
 const navLinks = document.querySelector('#nav-links')
@@ -7,7 +35,17 @@ const copyButton = document.querySelector('[data-copy]')
 const copyStatus = document.querySelector('[data-copy-status]')
 const command = document.querySelector('[data-command]')
 
-const updateHeader = () => header?.classList.toggle('is-scrolled', window.scrollY > 20)
+const promptInput = document.querySelector('#hero-prompt')
+const promptSubmit = document.querySelector('#hero-submit')
+const suggestions = document.querySelectorAll('.suggestion')
+const proofQuery = document.querySelector('#proof-query-text')
+const parallaxElements = document.querySelectorAll('[data-parallax]')
+
+// Header scroll transformation (qwenwork.ai floating pill)
+const updateHeader = () => {
+  header?.classList.toggle('is-scrolled', window.scrollY > 30)
+}
+
 const closeMenu = (restoreFocus = false) => {
   menuButton?.setAttribute('aria-expanded', 'false')
   menuButton?.setAttribute('aria-label', 'Open navigation')
@@ -18,6 +56,7 @@ const closeMenu = (restoreFocus = false) => {
 updateHeader()
 window.addEventListener('scroll', updateHeader, { passive: true })
 
+// Mobile menu toggle
 menuButton?.addEventListener('click', () => {
   const open = menuButton.getAttribute('aria-expanded') !== 'true'
   if (!open) {
@@ -40,6 +79,69 @@ navLinks?.querySelectorAll('a').forEach((link) => {
   link.addEventListener('click', () => closeMenu())
 })
 
+// Parallax floating decorative elements (qwenwork hero-float effect)
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+if (!reduceMotion && parallaxElements.length > 0) {
+  let ticking = false
+  const updateParallax = () => {
+    const scrollY = window.scrollY
+    parallaxElements.forEach((el) => {
+      const speed = Number.parseFloat(el.getAttribute('data-parallax') || '0.1')
+      const offset = scrollY * speed
+      el.style.transform = `translateY(${-offset}px)`
+    })
+    ticking = false
+  }
+
+  window.addEventListener(
+    'scroll',
+    () => {
+      if (!ticking) {
+        window.requestAnimationFrame(updateParallax)
+        ticking = true
+      }
+    },
+    { passive: true },
+  )
+}
+
+// Interactive Hero Prompt Box
+const handlePromptSubmit = () => {
+  const query = promptInput?.value?.trim()
+  if (!query) return
+
+  if (proofQuery) {
+    proofQuery.textContent = query
+  }
+
+  // Smooth scroll to product proof section
+  const proofSection = document.querySelector('#product')
+  if (proofSection) {
+    proofSection.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' })
+  }
+}
+
+promptSubmit?.addEventListener('click', handlePromptSubmit)
+promptInput?.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault()
+    handlePromptSubmit()
+  }
+})
+
+suggestions.forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const promptText = btn.getAttribute('data-prompt') || ''
+    if (promptInput) {
+      promptInput.value = promptText
+      promptInput.focus()
+    }
+    handlePromptSubmit()
+  })
+})
+
+// Copy commands to clipboard
 copyButton?.addEventListener('click', async () => {
   if (!command?.textContent) return
   try {
@@ -55,7 +157,7 @@ copyButton?.addEventListener('click', async () => {
   }
 })
 
-const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+// Scroll reveal animations
 const reveals = document.querySelectorAll('.reveal')
 
 if (reduceMotion || !('IntersectionObserver' in window)) {
@@ -69,7 +171,7 @@ if (reduceMotion || !('IntersectionObserver' in window)) {
         observer.unobserve(entry.target)
       })
     },
-    { threshold: 0.12 },
+    { threshold: 0.1 },
   )
   reveals.forEach((element) => observer.observe(element))
 }

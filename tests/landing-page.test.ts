@@ -42,6 +42,21 @@ describe('the landing page product contract', () => {
     expect(html).toContain('npm run desktop')
   })
 
+  it('uses a local typeface and motion hooks without sacrificing fallbacks', () => {
+    expect(styles).toContain('@font-face')
+    expect(styles).toMatch(/url\(['"]?assets\/fonts\/[^'")]+\.woff2/)
+    expect(styles).toContain('font-display: swap')
+    expect(html).toContain('data-parallax')
+    expect(script).toContain("classList.toggle('is-scrolled'")
+    expect(styles).toMatch(/@media \(prefers-reduced-motion: reduce\)/)
+  })
+
+  it('keeps the navigation operable across desktop and mobile states', () => {
+    expect(html).toContain('aria-expanded="false"')
+    expect(html).toContain('aria-controls="nav-links"')
+    expect(script).toContain("menuButton?.setAttribute('aria-expanded', 'false')")
+  })
+
   it('follows the system light or dark theme without JavaScript', () => {
     expect(styles).toContain('color-scheme: light dark')
     expect(styles).toMatch(/@media \(prefers-color-scheme: dark\)/)
@@ -49,7 +64,9 @@ describe('the landing page product contract', () => {
 
   it('keeps its progressive enhancement script local-only', () => {
     expect(script).not.toMatch(/\bfetch\s*\(/)
-    expect(script).not.toMatch(/XMLHttpRequest/)
+    expect(script).not.toMatch(/XMLHttpRequest|WebSocket|EventSource/)
+    expect(script).not.toMatch(/telemetry|analytics/i)
+    expect(styles).not.toMatch(/@import|url\(['"]?https?:\/\//i)
     expect(html).not.toMatch(/<(?:script|link)[^>]+https?:\/\//i)
   })
 })

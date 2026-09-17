@@ -7,7 +7,7 @@
       name="description"
       content="twigraph is local document search for Windows with source-grounded answers, offline retrieval, and no account or telemetry."
     />
-    <meta name="theme-color" content="#07110d" />
+    <meta name="theme-color" content="#fafafa" />
     <meta property="og:title" content="twigraph — Ask your files. Check every answer." />
     <meta
       property="og:description"
@@ -21,20 +21,112 @@
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
 
+    <!-- Header: 3-column pill layout with scroll transform (qwenwork.ai) -->
     <header class="site-header" data-header>
-      <nav class="nav shell" aria-label="Main navigation">
-        <a class="brand" href="#top" aria-label="twigraph home">
-          <img src="assets/twigraph-logo.png" alt="" width="36" height="36" />
-          <span>twigraph</span>
-        </a>
-        <div class="nav-links" id="nav-links">
-          <a href="#product">Product</a>
-          <a href="#workflow">How it works</a>
-          <a href="#privacy">Privacy</a>
-          <a href="#interfaces">Interfaces</a>
-          <a href="#current-build">Current build</a>
-        </div>
-        <a class="button button-small button-ghost nav-cta" href="#quickstart">Run from source</a>
+      <a class="brand" href="#top" aria-label="twigraph home">
+        <img src="assets/twigraph-logo.png" alt="twigraph" width="32" height="32" />
+        <span>twigraph</span>
+      </a>
+
+      <nav class="desktop-nav" aria-label="Main navigation">
+        <a href="#product">Product</a>
+        <a href="#workflow">How it works</a>
+        <a href="#privacy">Privacy</a>
+        <a href="#interfaces">Interfaces</a>
+        <a href="#current-build">Current build</a>
+      </nav>
+
+      <div class="header-actions">
+        <button
+          class="theme-toggle"
+          type="button"
+          aria-label="Toggle light and dark mode"
+          data-theme-toggle
+        >
+          <svg
+            class="icon-sun"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <svg
+            class="icon-moon"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+        <a class="button button--primary button-dark" href="#quickstart">Run from source</a>
+      </div>
+
+      <div class="mobile-actions">
+        <button
+          class="theme-toggle"
+          type="button"
+          aria-label="Toggle light and dark mode"
+          data-theme-toggle
+        >
+          <svg
+            class="icon-sun"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <svg
+            class="icon-moon"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
         <button
           class="menu-button"
           type="button"
@@ -45,22 +137,53 @@
         >
           <span></span><span></span>
         </button>
-      </nav>
+      </div>
     </header>
+
+    <!-- Mobile Drawer Navigation -->
+    <div class="nav-links mobile-nav" id="nav-links">
+      <a href="#product">Product</a>
+      <a href="#workflow">How it works</a>
+      <a href="#privacy">Privacy</a>
+      <a href="#interfaces">Interfaces</a>
+      <a href="#current-build">Current build</a>
+      <a class="button button--primary button-dark" href="#quickstart">Run from source</a>
+    </div>
 
     <main id="main">
       <section class="hero shell" id="top">
+        <!-- Parallax floating badges (qwenwork.ai style) -->
+        <div class="hero-float hero-float--1" data-parallax="0.14">
+          <i></i><span>Local Markdown &amp; TXT</span>
+        </div>
+        <div class="hero-float hero-float--2" data-parallax="0.18">
+          <i></i><span>BM25 Offline Retrieval</span>
+        </div>
+        <div class="hero-float hero-float--3" data-parallax="0.1">
+          <i></i><span>No Account or Telemetry</span>
+        </div>
+        <div class="hero-float hero-float--4" data-parallax="0.16">
+          <i></i><span>Windows Desktop</span>
+        </div>
+
         <div class="hero-copy reveal">
-          <p class="eyebrow"><span></span>Local-first RAG for Windows</p>
-          <h1>Ask your files.<br />Check every answer.</h1>
+          <h1 class="hero-title">
+            <span class="hero-title-accent">twigraph,</span>
+            <span>Ask your files.</span>
+            <span>Check every answer.</span>
+          </h1>
           <p class="hero-lede">
             twigraph turns folders you choose into a private, searchable index. Answers quote your
             documents and stay connected to the exact passage they came from.
           </p>
           <div class="hero-actions">
-            <a class="button button-primary" href="#quickstart">Run from source</a>
-            <a class="button button-secondary" href="https://github.com/lelianto/twigraph"
-              >Inspect the repository</a
+            <a class="button button--primary button-dark" href="#quickstart">Run from source</a>
+            <a
+              class="button button--secondary button-outline"
+              href="https://github.com/lelianto/twigraph"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Inspect repository</a
             >
           </div>
           <ul class="trust-line" aria-label="Current build summary">
@@ -70,6 +193,147 @@
           </ul>
         </div>
 
+        <!-- Interactive Hero Prompt Box (qwenwork.ai style) -->
+        <div class="prompt-area reveal">
+          <div class="prompt-box">
+            <div class="prompt-input-row">
+              <textarea
+                class="prompt-input"
+                id="hero-prompt"
+                placeholder="Ask anything about your local documents, e.g. How are rank lists combined?"
+                aria-label="Ask indexed files"
+                rows="2"
+              ></textarea>
+              <button class="send-button" type="button" aria-label="Ask files" id="hero-submit">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <line x1="12" y1="19" x2="12" y2="5"></line>
+                  <polyline points="5 12 12 5 19 12"></polyline>
+                </svg>
+              </button>
+            </div>
+            <div class="suggestions" aria-label="Suggested tasks">
+              <div class="suggestions-header">
+                <span class="suggestions-label">Suggested Queries</span>
+              </div>
+              <button class="suggestion" type="button" data-prompt="How are rank lists combined?">
+                <div class="suggestion-content">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                  </svg>
+                  <span>How are rank lists combined with reciprocal rank fusion?</span>
+                </div>
+                <svg
+                  class="suggestion-arrow"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <line x1="7" y1="17" x2="17" y2="7"></line>
+                  <polyline points="7 7 17 7 17 17"></polyline>
+                </svg>
+              </button>
+              <button
+                class="suggestion"
+                type="button"
+                data-prompt="atomic index writes in storage.md"
+              >
+                <div class="suggestion-content">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
+                  <span>Search atomic index writes and safe replacement guarantees</span>
+                </div>
+                <svg
+                  class="suggestion-arrow"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <line x1="7" y1="17" x2="17" y2="7"></line>
+                  <polyline points="7 7 17 7 17 17"></polyline>
+                </svg>
+              </button>
+              <button
+                class="suggestion"
+                type="button"
+                data-prompt="What happens when retrieval is weak?"
+              >
+                <div class="suggestion-content">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                  </svg>
+                  <span>Verify fallback behavior when local retrieval confidence is weak</span>
+                </div>
+                <svg
+                  class="suggestion-arrow"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <line x1="7" y1="17" x2="17" y2="7"></line>
+                  <polyline points="7 7 17 7 17 17"></polyline>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product Proof: Verifiable Answer & Source Quote -->
         <figure class="product-proof reveal" id="product" aria-labelledby="proof-caption">
           <figcaption id="proof-caption">
             A real answer pattern: the claim stays beside its evidence.
@@ -77,18 +341,20 @@
           <div class="proof-shell">
             <div class="proof-query">
               <span>Question</span>
-              <strong>How are rank lists combined?</strong>
-              <i>local</i>
+              <strong id="proof-query-text">How are rank lists combined?</strong>
+              <i>local BM25</i>
             </div>
             <div class="proof-body">
               <article class="answer-proof" data-answer-proof>
-                <p class="proof-label">Answer</p>
-                <div class="answer-line">
-                  <span class="citation-marker">1</span>
-                  <p>
-                    Rank lists are combined with reciprocal rank fusion. Each retriever contributes
-                    <code>1 / (k + rank)</code>, with <code>k = 60</code>.
-                  </p>
+                <div>
+                  <p class="proof-label">Extractive Answer</p>
+                  <div class="answer-line">
+                    <span class="citation-marker">1</span>
+                    <p id="proof-answer-text">
+                      Rank lists are combined with reciprocal rank fusion. Each retriever contributes
+                      <code>1 / (k + rank)</code>, with <code>k = 60</code>.
+                    </p>
+                  </div>
                 </div>
                 <p class="grounded-state"><span></span>Quoted exactly from your local index</p>
               </article>
@@ -97,8 +363,8 @@
                 <strong><span>[1]</span> retrieval.md</strong>
                 <small>§ Retrieval › Fusion</small>
                 <p>
-                  Rank lists are combined with reciprocal rank fusion: each retriever contributes
-                  1 / (k + rank); k is 60.
+                  Rank lists are combined with reciprocal rank fusion: each retriever contributes 1
+                  / (k + rank); k is 60.
                 </p>
               </aside>
             </div>
@@ -106,11 +372,15 @@
         </figure>
       </section>
 
+      <!-- Current Build Section -->
       <section class="build-section" id="current-build" aria-labelledby="build-title">
         <div class="shell build-layout">
           <div class="section-intro reveal">
-            <p class="kicker">Current build</p>
-            <h2 id="build-title">What works is clear.<br />What does not is clear too.</h2>
+            <span class="kicker">Current build</span>
+            <h2 id="build-title">
+              What works is clear.<br />
+              What does not is clear too.
+            </h2>
             <p>
               twigraph is an early preview you run from a checkout. The list stays factual instead
               of hiding unfinished work behind a roadmap graphic.
@@ -120,10 +390,16 @@
             <section aria-labelledby="available-title">
               <h3 id="available-title"><span aria-hidden="true">✓</span> Available today</h3>
               <ul>
-                <li><strong>Windows desktop</strong><span>Add, index, ask, inspect sources</span></li>
+                <li>
+                  <strong>Windows desktop</strong><span>Add, index, ask, inspect sources</span>
+                </li>
                 <li><strong>Local formats</strong><span>.txt, .md, .html and .htm</span></li>
-                <li><strong>Offline retrieval</strong><span>BM25 search, no model required</span></li>
-                <li><strong>Grounded answers</strong><span>Extractive text with citations</span></li>
+                <li>
+                  <strong>Offline retrieval</strong><span>BM25 search, no model required</span>
+                </li>
+                <li>
+                  <strong>Grounded answers</strong><span>Extractive text with citations</span>
+                </li>
                 <li><strong>CLI + read-only MCP</strong><span>One shared local index</span></li>
               </ul>
             </section>
@@ -141,9 +417,10 @@
         </div>
       </section>
 
+      <!-- How it Works Section -->
       <section class="section shell" id="workflow" aria-labelledby="workflow-title">
         <div class="section-intro reveal">
-          <p class="kicker">How it works</p>
+          <span class="kicker">How it works</span>
           <h2 id="workflow-title">One local path from folder to evidence.</h2>
           <p>
             The pipeline preserves document structure so a useful result still knows where it came
@@ -153,7 +430,10 @@
         <ol class="workflow reveal">
           <li>
             <span>01</span>
-            <div><h3>Choose a folder</h3><p>Only directories you select enter the collection.</p></div>
+            <div>
+              <h3>Choose a folder</h3>
+              <p>Only directories you select enter the collection.</p>
+            </div>
           </li>
           <li>
             <span>02</span>
@@ -164,15 +444,24 @@
           </li>
           <li>
             <span>03</span>
-            <div><h3>Build a local index</h3><p>Deterministic chunks are written atomically on your device.</p></div>
+            <div>
+              <h3>Build a local index</h3>
+              <p>Deterministic chunks are written atomically on your device.</p>
+            </div>
           </li>
           <li>
             <span>04</span>
-            <div><h3>Ask or search</h3><p>BM25 finds relevant passages without an API or network.</p></div>
+            <div>
+              <h3>Ask or search</h3>
+              <p>BM25 finds relevant passages without an API or network.</p>
+            </div>
           </li>
           <li>
             <span>05</span>
-            <div><h3>Follow the citation</h3><p>Inspect the exact passage, then open its indexed file.</p></div>
+            <div>
+              <h3>Follow the citation</h3>
+              <p>Inspect the exact passage, then open its indexed file.</p>
+            </div>
           </li>
         </ol>
         <p class="format-note reveal">
@@ -181,10 +470,11 @@
         </p>
       </section>
 
+      <!-- Privacy Boundary Section -->
       <section class="privacy-section" id="privacy" aria-labelledby="privacy-title">
         <div class="shell privacy-layout">
           <div class="section-intro reveal">
-            <p class="kicker">Privacy boundary</p>
+            <span class="kicker">Privacy boundary</span>
             <h2 id="privacy-title">Local is an architecture, not a badge.</h2>
             <p>
               The current build has no code path that makes a network request. The desktop renderer
@@ -193,23 +483,36 @@
           </div>
           <div class="boundary reveal" aria-label="twigraph local data flow">
             <div class="boundary-flow">
-              <span>Chosen folders</span><i>→</i><span>Local parsers</span><i>→</i
-              ><span>Local index</span><i>→</i><span>BM25</span><i>→</i
-              ><span>Answer + citations</span>
+              <span>Chosen folders</span><i>→</i><span>Local parsers</span><i>→</i><span
+                >Local index</span
+              ><i>→</i><span>BM25</span><i>→</i><span>Answer + citations</span>
             </div>
             <dl>
-              <div><dt>Renderer</dt><dd>No Node, <code>connect-src 'none'</code></dd></div>
-              <div><dt>Machine access</dt><dd>Named IPC methods only</dd></div>
-              <div><dt>Open source</dt><dd>Restricted to indexed files</dd></div>
-              <div><dt>Account data</dt><dd>No account and no telemetry</dd></div>
+              <div>
+                <dt>Renderer</dt>
+                <dd>No Node, <code>connect-src 'none'</code></dd>
+              </div>
+              <div>
+                <dt>Machine access</dt>
+                <dd>Named IPC methods only</dd>
+              </div>
+              <div>
+                <dt>Open source</dt>
+                <dd>Restricted to indexed files</dd>
+              </div>
+              <div>
+                <dt>Account data</dt>
+                <dd>No account and no telemetry</dd>
+              </div>
             </dl>
           </div>
         </div>
       </section>
 
+      <!-- Interfaces Section -->
       <section class="section shell" id="interfaces" aria-labelledby="interfaces-title">
         <div class="section-intro reveal">
-          <p class="kicker">Three interfaces, one index</p>
+          <span class="kicker">Three interfaces, one index</span>
           <h2 id="interfaces-title">Use the surface that fits the work.</h2>
         </div>
         <div class="interface-list reveal">
@@ -234,16 +537,23 @@
         </div>
       </section>
 
+      <!-- Quickstart Section -->
       <section class="quickstart-section" id="quickstart" aria-labelledby="quickstart-title">
         <div class="shell quickstart-layout">
           <div class="section-intro reveal">
-            <p class="kicker">Run from source</p>
+            <span class="kicker">Run from source</span>
             <h2 id="quickstart-title">Try it without pointing at a real document.</h2>
             <p>
               The included generator creates a synthetic folder. Index it, ask a grounded question,
               then open the Windows desktop app over the same index.
             </p>
-            <a class="text-link" href="https://github.com/lelianto/twigraph">View setup details on GitHub</a>
+            <a
+              class="text-link"
+              href="https://github.com/lelianto/twigraph"
+              target="_blank"
+              rel="noopener noreferrer"
+              >View setup details on GitHub →</a
+            >
           </div>
           <div class="install-block reveal">
             <div class="install-head">
@@ -256,7 +566,13 @@ npm run twigraph -- folder add fixtures/sample
 npm run twigraph -- index --all
 npm run twigraph -- ask "reciprocal rank fusion"
 npm run desktop</code></pre>
-            <p id="copy-status" class="sr-only" role="status" aria-live="polite" data-copy-status></p>
+            <p
+              id="copy-status"
+              class="sr-only"
+              role="status"
+              aria-live="polite"
+              data-copy-status
+            ></p>
           </div>
         </div>
       </section>
@@ -264,11 +580,21 @@ npm run desktop</code></pre>
 
     <footer class="site-footer">
       <div class="shell footer-row">
-        <a class="brand" href="#top"><img src="assets/twigraph-logo.png" alt="" width="32" height="32" /><span>twigraph</span></a>
-        <p>Ask your files. Check every answer.</p>
+        <a class="brand" href="#top">
+          <img src="assets/twigraph-logo.png" alt="" width="28" height="28" />
+          <span>twigraph</span>
+        </a>
+        <p>Ask your files. Check every answer. Privacy-first, local-first RAG for Windows.</p>
         <div class="footer-links">
-          <a href="https://github.com/lelianto/twigraph">GitHub</a>
-          <a href="https://github.com/lelianto/twigraph/blob/main/LICENSE">Apache-2.0</a>
+          <a href="https://github.com/lelianto/twigraph" target="_blank" rel="noopener noreferrer"
+            >GitHub</a
+          >
+          <a
+            href="https://github.com/lelianto/twigraph/blob/main/LICENSE"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Apache-2.0</a
+          >
         </div>
       </div>
     </footer>
