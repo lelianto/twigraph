@@ -1,11 +1,11 @@
 import { homedir } from 'node:os'
 import { join, resolve } from 'node:path'
 
-export const DATA_DIR_VARIABLE = 'MULAT_DATA_DIR'
-export const OFFLINE_VARIABLE = 'MULAT_OFFLINE'
+export const DATA_DIR_VARIABLE = 'TWIGRAPH_DATA_DIR'
+export const OFFLINE_VARIABLE = 'TWIGRAPH_OFFLINE'
 
 /**
- * Where mulat keeps everything when the user has not said otherwise.
+ * Where twigraph keeps everything when the user has not said otherwise.
  *
  * One directory, in the place each platform expects application data to live, so the user
  * can find it, look inside it, and delete it.
@@ -21,14 +21,14 @@ export function defaultDataDir(
       localAppData === undefined || localAppData === ''
         ? join(home, 'AppData', 'Local')
         : localAppData,
-      'mulat',
+      'twigraph',
     )
   }
   if (platform === 'darwin') {
-    return join(home, 'Library', 'Application Support', 'mulat')
+    return join(home, 'Library', 'Application Support', 'twigraph')
   }
   const xdg = env.XDG_DATA_HOME
-  return join(xdg === undefined || xdg === '' ? join(home, '.local', 'share') : xdg, 'mulat')
+  return join(xdg === undefined || xdg === '' ? join(home, '.local', 'share') : xdg, 'twigraph')
 }
 
 export function resolveDataDir(

@@ -1,4 +1,4 @@
-import type { ChunkRecord, ParsedDocument } from '@mulat/shared'
+import type { ChunkRecord, ParsedDocument } from '@twigraph/shared'
 
 export interface ChunkingOptions {
   readonly targetTokens: number

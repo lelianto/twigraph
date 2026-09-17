@@ -3,12 +3,12 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { defaultConfig, loadConfig, parseConfig, saveConfig } from '../src/config'
-import { MulatError } from '../src/errors'
+import { TwigraphError } from '../src/errors'
 
 const temporaryDirectories: string[] = []
 
 async function withTempDir<T>(fn: (dir: string) => Promise<T>): Promise<T> {
-  const dir = await mkdtemp(join(tmpdir(), 'mulat-config-'))
+  const dir = await mkdtemp(join(tmpdir(), 'twigraph-config-'))
   temporaryDirectories.push(dir)
   return fn(dir)
 }
@@ -126,9 +126,9 @@ describe('parseConfig', () => {
       thrown = error
     }
 
-    expect(thrown).toBeInstanceOf(MulatError)
-    expect((thrown as MulatError).code).toBe('CONFIG_INVALID')
-    expect((thrown as MulatError).message).toMatch(/retrieval/)
+    expect(thrown).toBeInstanceOf(TwigraphError)
+    expect((thrown as TwigraphError).code).toBe('CONFIG_INVALID')
+    expect((thrown as TwigraphError).message).toMatch(/retrieval/)
   })
 
   it('validates folder records', () => {
@@ -189,9 +189,9 @@ describe('loadConfig', () => {
       await saveConfig(path, defaultConfig())
 
       const { readdir } = await import('node:fs/promises')
-      // The marker is what claims the directory as mulat's, so that a later
+      // The marker is what claims the directory as twigraph's, so that a later
       // "delete everything" has something to check before it touches anything.
-      expect(await readdir(dir)).toEqual(['.mulat-data', 'config.json'])
+      expect(await readdir(dir)).toEqual(['.twigraph-data', 'config.json'])
     })
   })
 
@@ -200,8 +200,8 @@ describe('loadConfig', () => {
       const path = join(dir, 'config.json')
       await saveConfig(path, defaultConfig())
 
-      const { isMulatDataDirectory } = await import('../src/data-dir')
-      expect(await isMulatDataDirectory(dir)).toBe(true)
+      const { isTwigraphDataDirectory } = await import('../src/data-dir')
+      expect(await isTwigraphDataDirectory(dir)).toBe(true)
     })
   })
 
@@ -209,7 +209,7 @@ describe('loadConfig', () => {
     await withTempDir(async (dir) => {
       // First run: nothing has been created yet, and the caller should not have to know
       // that the first write is also the one that brings the directory into being.
-      const path = join(dir, 'mulat', 'config.json')
+      const path = join(dir, 'twigraph', 'config.json')
       const config = defaultConfig({ offline: true })
 
       await saveConfig(path, config)

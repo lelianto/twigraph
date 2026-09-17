@@ -1,6 +1,6 @@
-# mulat Agent Instructions
+# twigraph Agent Instructions
 
-mulat is a privacy-first, local-first RAG application. It answers questions about a
+twigraph is a privacy-first, local-first RAG application. It answers questions about a
 user's own files without uploading them anywhere. You are working on the product itself,
 not on a machine that happens to run it.
 
@@ -48,7 +48,7 @@ implemented behavior.
 | `npm run verify` | typecheck + lint + tests with coverage gates. This is the definition of green. |
 | `npm run test:watch` | the TDD inner loop |
 | `npm test` | full suite with coverage |
-| `npm run mulat -- <args>` | run the CLI from source, e.g. `npm run mulat -- status` |
+| `npm run twigraph -- <args>` | run the CLI from source, e.g. `npm run twigraph -- status` |
 | `npm run fixture:generate` | rewrite the synthetic fixtures under `fixtures/sample/` |
 | `npm run format:check` | verify formatting without changing files |
 
@@ -68,12 +68,12 @@ test runner nor the type checker. Install with `npm install --include=dev`.
 - **Deleting user data is a first-class feature.** Any code path that writes an index must
   have a tested path that removes it completely.
 - **Deletion is fail-safe.** Never recursively remove a user-supplied data-directory path.
-  Require the mulat marker, remove only named mulat artifacts, and preserve a directory
+  Require the twigraph marker, remove only named twigraph artifacts, and preserve a directory
   that still contains anything else. Test filesystem roots, the home directory, project
   roots, arbitrary unowned directories, and user files inside an owned directory.
 - **The marker is not a security boundary.** A first write currently marks its target
-  directory as mulat-owned. Do not point `MULAT_DATA_DIR` at a non-empty personal folder,
-  and do not describe the marker as proof that every named artifact was created by mulat.
+  directory as twigraph-owned. Do not point `TWIGRAPH_DATA_DIR` at a non-empty personal folder,
+  and do not describe the marker as proof that every named artifact was created by twigraph.
 - **Keep commits dependency-ordered.** Shared contracts and data-directory primitives land
   before ingestion, indexing, retrieval, and CLI consumers. Every intermediate commit
   must remain installable and pass `npm run verify`.

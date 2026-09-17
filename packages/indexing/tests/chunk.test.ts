@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import type { Block, ParsedDocument } from '@mulat/shared'
+import type { Block, ParsedDocument } from '@twigraph/shared'
 
 import { chunkDocument } from '../src/chunk'
 import type { ChunkingOptions } from '../src/chunk'

@@ -1,4 +1,4 @@
-import type { Bm25Config } from '@mulat/shared'
+import type { Bm25Config } from '@twigraph/shared'
 
 import { tokenize } from './tokenize'
 

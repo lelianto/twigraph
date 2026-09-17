@@ -2,7 +2,7 @@ import { rm } from 'node:fs/promises'
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
-import { MulatError, toWireError } from '@mulat/shared'
+import { TwigraphError, toWireError } from '@twigraph/shared'
 
 import { createTextParser } from '../src/parsers/text'
 import { makeTempDir, parseInputFor, writeFixture } from './helpers'
@@ -12,7 +12,7 @@ const parser = createTextParser()
 let root = ''
 
 beforeAll(async () => {
-  root = await makeTempDir('mulat-text-')
+  root = await makeTempDir('twigraph-text-')
 })
 
 afterAll(async () => {
@@ -83,7 +83,7 @@ describe('the text parser', () => {
 
   it('reports an empty file rather than returning an empty document', async () => {
     await writeFixture(root, 'empty.txt', '')
-    await expect(parse('empty.txt')).rejects.toThrow(MulatError)
+    await expect(parse('empty.txt')).rejects.toThrow(TwigraphError)
     await expect(parse('empty.txt')).rejects.toMatchObject({ code: 'PARSE_EMPTY' })
   })
 

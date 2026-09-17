@@ -1,7 +1,7 @@
 import type { Answer, AnswerProviderId, SearchOptions, SearchResult } from './contracts/answer'
 import type { DocumentFailure } from './contracts/document'
 import type { IndexManifest } from './contracts/stores'
-import type { MulatConfig } from './config'
+import type { TwigraphConfig } from './config'
 import type { WireError } from './errors'
 
 /**
@@ -125,10 +125,10 @@ export interface SettingsPatch {
 }
 
 /**
- * The object `contextBridge` exposes as `window.mulat`. Event subscriptions return their
+ * The object `contextBridge` exposes as `window.twigraph`. Event subscriptions return their
  * own unsubscribe function so the renderer cannot leak listeners across a reload.
  */
-export interface MulatApi {
+export interface TwigraphApi {
   readonly folders: {
     list(): Promise<IpcResult<readonly FolderSummary[]>>
     add(): Promise<IpcResult<FolderSummary | null>>
@@ -150,8 +150,8 @@ export interface MulatApi {
     reveal(absolutePath: string): Promise<IpcResult<void>>
   }
   readonly settings: {
-    get(): Promise<IpcResult<MulatConfig>>
-    set(patch: SettingsPatch): Promise<IpcResult<MulatConfig>>
+    get(): Promise<IpcResult<TwigraphConfig>>
+    set(patch: SettingsPatch): Promise<IpcResult<TwigraphConfig>>
   }
   readonly privacy: {
     status(): Promise<IpcResult<PrivacyStatus>>

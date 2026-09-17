@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { MulatError } from '@mulat/shared'
+import { TwigraphError } from '@twigraph/shared'
 
 import { createParserRegistry, defaultParsers } from '../src/registry'
 
@@ -38,7 +38,7 @@ describe('parser registry', () => {
     const registry = createParserRegistry([])
     const [markdown] = defaultParsers()
     registry.register(markdown!)
-    expect(() => registry.register(markdown!)).toThrow(MulatError)
+    expect(() => registry.register(markdown!)).toThrow(TwigraphError)
   })
 
   it('starts empty and stays empty', () => {

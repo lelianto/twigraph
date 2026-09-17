@@ -1,10 +1,35 @@
 {
-  "name": "mulat",
+  "name": "twigraph",
   "version": "0.1.0",
-  "private": true,
-  "description": "Ask deep questions about your own files without uploading them to the cloud.",
+  "private": false,
+  "description": "Privacy-first local document search with source-grounded results.",
   "license": "Apache-2.0",
   "type": "module",
+  "bin": {
+    "twigraph": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "assets/twigraph-logo.png",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lelianto/mulat.git"
+  },
+  "homepage": "https://github.com/lelianto/mulat#readme",
+  "bugs": {
+    "url": "https://github.com/lelianto/mulat/issues"
+  },
+  "keywords": [
+    "rag",
+    "local-first",
+    "privacy",
+    "search",
+    "documents",
+    "cli"
+  ],
   "engines": {
     "node": ">=22.13.0"
   },
@@ -20,13 +45,16 @@
     "test": "vitest run --coverage",
     "test:watch": "vitest",
     "fixture:generate": "node fixtures/generate.mjs",
-    "mulat": "tsx apps/cli/src/main.ts",
+    "twigraph": "tsx apps/cli/src/main.ts",
+    "build:cli": "node scripts/build-cli.mjs",
+    "prepack": "npm run build:cli",
     "verify": "npm run typecheck && npm run lint && npm run test"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@types/node": "^24.10.1",
     "@vitest/coverage-v8": "^5.0.1",
+    "esbuild": "~0.28.0",
     "eslint": "^9.39.1",
     "prettier": "^3.6.2",
     "tsx": "^4.23.13",

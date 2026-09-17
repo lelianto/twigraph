@@ -1,18 +1,18 @@
 {
-  "name": "@mulat/cli",
+  "name": "@twigraph/cli",
   "version": "0.2.0",
   "private": true,
   "type": "module",
-  "description": "The mulat command line interface: folders, indexing, search and deletion.",
+  "description": "The twigraph command line interface: folders, indexing, search and deletion.",
   "bin": {
-    "mulat": "./src/main.ts"
+    "twigraph": "./src/main.ts"
   },
   "exports": {
     ".": "./src/cli.ts"
   },
   "dependencies": {
-    "@mulat/indexing": "0.2.0",
-    "@mulat/retrieval": "0.2.0",
-    "@mulat/shared": "0.1.0"
+    "@twigraph/indexing": "0.2.0",
+    "@twigraph/retrieval": "0.2.0",
+    "@twigraph/shared": "0.1.0"
   }
 }

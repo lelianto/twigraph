@@ -1,7 +1,7 @@
 /**
- * Every error that crosses a module or process boundary in mulat.
+ * Every error that crosses a module or process boundary in twigraph.
  *
- * A `MulatError` carries a stable code the UI can switch on, and a message that is safe to
+ * A `TwigraphError` carries a stable code the UI can switch on, and a message that is safe to
  * show a user. It deliberately does not carry a stack across the wire: stacks contain file
  * contents and paths from the user's disk.
  */
@@ -42,18 +42,18 @@ const INTERNAL_WIRE_ERROR: WireError = {
   message: 'Unexpected internal error',
 }
 
-export interface MulatErrorOptions {
+export interface TwigraphErrorOptions {
   readonly detail?: ErrorDetail
   readonly cause?: unknown
 }
 
-export class MulatError extends Error {
+export class TwigraphError extends Error {
   readonly code: ErrorCode
   readonly detail: ErrorDetail | undefined
 
-  constructor(code: ErrorCode, message: string, options: MulatErrorOptions = {}) {
+  constructor(code: ErrorCode, message: string, options: TwigraphErrorOptions = {}) {
     super(message, options.cause === undefined ? undefined : { cause: options.cause })
-    this.name = 'MulatError'
+    this.name = 'TwigraphError'
     this.code = code
     this.detail = options.detail
   }
@@ -65,15 +65,15 @@ export class MulatError extends Error {
   }
 }
 
-export function isMulatError(value: unknown): value is MulatError {
-  return value instanceof MulatError
+export function isTwigraphError(value: unknown): value is TwigraphError {
+  return value instanceof TwigraphError
 }
 
 /**
  * Converts an unknown throwable into something safe to hand to another process. Anything
- * that is not a `MulatError` becomes a generic internal error, because an arbitrary
+ * that is not a `TwigraphError` becomes a generic internal error, because an arbitrary
  * `Error.message` can contain a file path or a fragment of a document.
  */
 export function toWireError(value: unknown): WireError {
-  return isMulatError(value) ? value.toWire() : INTERNAL_WIRE_ERROR
+  return isTwigraphError(value) ? value.toWire() : INTERNAL_WIRE_ERROR
 }

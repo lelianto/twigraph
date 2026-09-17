@@ -8,11 +8,11 @@ coverage/
 Thumbs.db
 
 # Local runtime data. Never commit an index or a prepared model.
-.mulat/
-mulat-verify-*/
-# The marker that proves a directory is mulat's data directory. It appears wherever the
+.twigraph/
+twigraph-verify-*/
+# The marker that proves a directory is twigraph's data directory. It appears wherever the
 # data directory is pointed, including inside this repository.
-.mulat-data
+.twigraph-data
 
 # Local environment overrides
 .env

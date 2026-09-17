@@ -41,7 +41,7 @@ export interface ParseInput {
 }
 
 /**
- * A parser either returns a document or throws a `MulatError`. It never returns a partial
+ * A parser either returns a document or throws a `TwigraphError`. It never returns a partial
  * document with a silent gap: a file the pipeline cannot read is reported against that
  * file and the run carries on.
  */

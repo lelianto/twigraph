@@ -21,8 +21,8 @@ let dataDir = ''
 let data: DataStore
 
 beforeEach(async () => {
-  root = await mkdtemp(join(tmpdir(), 'mulat-build-src-'))
-  dataDir = await mkdtemp(join(tmpdir(), 'mulat-build-data-'))
+  root = await mkdtemp(join(tmpdir(), 'twigraph-build-src-'))
+  dataDir = await mkdtemp(join(tmpdir(), 'twigraph-build-data-'))
   await generateFixtures(root)
   data = createIndexStore({ dataDir })
 })

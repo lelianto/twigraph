@@ -1,8 +1,8 @@
 import { readFile } from 'node:fs/promises'
 import { basename, extname } from 'node:path'
 
-import { MulatError } from '@mulat/shared'
-import type { Block, ParsedDocument, ParseInput } from '@mulat/shared'
+import { TwigraphError } from '@twigraph/shared'
+import type { Block, ParsedDocument, ParseInput } from '@twigraph/shared'
 
 const UTF8 = new TextDecoder('utf-8', { fatal: true })
 const BOM = '\uFEFF'
@@ -20,21 +20,21 @@ export function normalizeNewlines(text: string): string {
  * outcome instead.
  *
  * The message never contains the path, because `toWireError()` only drops a path for an
- * error it did not create — a `MulatError` message is shown to the user as it stands.
+ * error it did not create — a `TwigraphError` message is shown to the user as it stands.
  */
 export async function readDocumentText(input: ParseInput): Promise<string> {
   let bytes: Uint8Array
   try {
     bytes = await readFile(input.absolutePath)
   } catch (error) {
-    throw new MulatError('PARSE_FAILED', 'The file could not be read', { cause: error })
+    throw new TwigraphError('PARSE_FAILED', 'The file could not be read', { cause: error })
   }
 
   let text: string
   try {
     text = UTF8.decode(bytes)
   } catch (error) {
-    throw new MulatError('PARSE_FAILED', 'The file is not valid UTF-8 text', { cause: error })
+    throw new TwigraphError('PARSE_FAILED', 'The file is not valid UTF-8 text', { cause: error })
   }
 
   const withoutBom = text.startsWith(BOM) ? text.slice(BOM.length) : text
@@ -43,7 +43,7 @@ export async function readDocumentText(input: ParseInput): Promise<string> {
 
 /** Every parser reports an empty document the same way. */
 export function emptyDocument(): never {
-  throw new MulatError('PARSE_EMPTY', 'The document has no text to index')
+  throw new TwigraphError('PARSE_EMPTY', 'The document has no text to index')
 }
 
 export function assembleDocument(

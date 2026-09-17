@@ -1,6 +1,6 @@
 import type { FolderRecord, FolderRegistry } from './contracts/stores'
 import { loadConfig, saveConfig } from './config'
-import { MulatError } from './errors'
+import { TwigraphError } from './errors'
 import { canonicalFolderPath, folderIdFor } from './folders'
 
 /**
@@ -33,7 +33,7 @@ export function createFolderRegistry(configPath: string): FolderRegistry {
       const config = await loadConfig(configPath)
 
       if (config.folders.some((folder) => folder.id === id)) {
-        throw new MulatError('FOLDER_ALREADY_INDEXED', 'That folder is already in the list')
+        throw new TwigraphError('FOLDER_ALREADY_INDEXED', 'That folder is already in the list')
       }
 
       const record: FolderRecord = { id, path: canonical, addedAtMs: nowMs }
@@ -48,7 +48,7 @@ export function createFolderRegistry(configPath: string): FolderRegistry {
       const config = await loadConfig(configPath)
       const existing = config.folders.find((folder) => folder.id === folderId)
       if (existing === undefined) {
-        throw new MulatError('FOLDER_NOT_FOUND', 'That folder is not in the list')
+        throw new TwigraphError('FOLDER_NOT_FOUND', 'That folder is not in the list')
       }
 
       const updated: FolderRecord = { ...existing, ...patch }
@@ -59,7 +59,7 @@ export function createFolderRegistry(configPath: string): FolderRegistry {
     remove: async (folderId: string): Promise<void> => {
       const config = await loadConfig(configPath)
       if (!config.folders.some((folder) => folder.id === folderId)) {
-        throw new MulatError('FOLDER_NOT_FOUND', 'That folder is not in the list')
+        throw new TwigraphError('FOLDER_NOT_FOUND', 'That folder is not in the list')
       }
       await write(config.folders.filter((folder) => folder.id !== folderId))
     },

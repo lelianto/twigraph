@@ -5,9 +5,9 @@ import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { generateFixtures } from '../../../fixtures/generate.mjs'
-import { buildIndex, createIndexStore } from '@mulat/indexing'
-import { MulatError } from '@mulat/shared'
-import type { ChunkRecord, DocumentRecord, RetrievalConfig } from '@mulat/shared'
+import { buildIndex, createIndexStore } from '@twigraph/indexing'
+import { TwigraphError } from '@twigraph/shared'
+import type { ChunkRecord, DocumentRecord, RetrievalConfig } from '@twigraph/shared'
 
 import { createRetriever, meetsConfidence } from '../src/search'
 import type { SearchCorpus } from '../src/search'
@@ -83,7 +83,7 @@ function retrieverFor(corpus: SearchCorpus, overrides: Partial<RetrievalConfig> 
 describe('searching', () => {
   it('refuses an empty query instead of returning everything', async () => {
     const retriever = retrieverFor(CORPUS)
-    await expect(retriever.search('   ')).rejects.toBeInstanceOf(MulatError)
+    await expect(retriever.search('   ')).rejects.toBeInstanceOf(TwigraphError)
     await expect(retriever.search('')).rejects.toMatchObject({ code: 'QUERY_EMPTY' })
   })
 
@@ -186,8 +186,8 @@ describe('searching a real index built from the fixtures', () => {
   let dataDir = ''
 
   beforeEach(async () => {
-    root = await mkdtemp(join(tmpdir(), 'mulat-search-src-'))
-    dataDir = await mkdtemp(join(tmpdir(), 'mulat-search-data-'))
+    root = await mkdtemp(join(tmpdir(), 'twigraph-search-src-'))
+    dataDir = await mkdtemp(join(tmpdir(), 'twigraph-search-data-'))
     await generateFixtures(root)
     const data = createIndexStore({ dataDir })
     await buildIndex(data, {

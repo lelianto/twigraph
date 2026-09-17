@@ -1,4 +1,4 @@
-import { MulatError, collapseWhitespace } from '@mulat/shared'
+import { TwigraphError, collapseWhitespace } from '@twigraph/shared'
 import type {
   ChunkRecord,
   DocumentRecord,
@@ -7,7 +7,7 @@ import type {
   SearchHit,
   SearchOptions,
   SearchResult,
-} from '@mulat/shared'
+} from '@twigraph/shared'
 
 import { buildLexicalIndex, searchLexical } from './bm25'
 import { tokenize } from './tokenize'
@@ -77,7 +77,7 @@ export function createRetriever(
       const started = now()
       const trimmed = query.trim()
       if (trimmed === '') {
-        throw new MulatError('QUERY_EMPTY', 'Enter something to search for')
+        throw new TwigraphError('QUERY_EMPTY', 'Enter something to search for')
       }
 
       const corpus = await loadCorpus()

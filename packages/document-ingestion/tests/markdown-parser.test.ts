@@ -2,7 +2,7 @@ import { rm } from 'node:fs/promises'
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
-import { MulatError } from '@mulat/shared'
+import { TwigraphError } from '@twigraph/shared'
 
 import { createMarkdownParser } from '../src/parsers/markdown'
 import { makeTempDir, parseInputFor, writeFixture } from './helpers'
@@ -13,7 +13,7 @@ const FENCE = '```'
 let root = ''
 
 beforeAll(async () => {
-  root = await makeTempDir('mulat-markdown-')
+  root = await makeTempDir('twigraph-markdown-')
 })
 
 afterAll(async () => {
@@ -185,12 +185,12 @@ describe('the markdown parser', () => {
     await expect(parse('bad.md')).rejects.toMatchObject({ code: 'PARSE_FAILED' })
   })
 
-  it('never throws something that is not a MulatError', async () => {
+  it('never throws something that is not a TwigraphError', async () => {
     await writeFixture(root, 'missing-target.md', 'Body.\n')
     const input = await parseInputFor(root, 'missing-target.md')
 
     await expect(
       parser.parse({ ...input, absolutePath: `${input.absolutePath}.gone` }),
-    ).rejects.toBeInstanceOf(MulatError)
+    ).rejects.toBeInstanceOf(TwigraphError)
   })
 })

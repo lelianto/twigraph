@@ -4,7 +4,7 @@ import { join } from 'node:path'
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
-import type { ChunkRecord, DocumentRecord, IndexPayload, IndexManifest } from '@mulat/shared'
+import type { ChunkRecord, DocumentRecord, IndexPayload, IndexManifest } from '@twigraph/shared'
 
 import { createIndexStore } from '../src/index-store'
 import type { DataStore } from '../src/index-store'
@@ -16,7 +16,7 @@ let dataDir = ''
 let data: DataStore
 
 beforeEach(async () => {
-  dataDir = await mkdtemp(join(tmpdir(), 'mulat-index-'))
+  dataDir = await mkdtemp(join(tmpdir(), 'twigraph-index-'))
   data = createIndexStore({ dataDir })
 })
 
@@ -289,8 +289,8 @@ describe('deleting every index', () => {
     expect(await data.store.readManifest(FOLDER_ID)).toBeNull()
     await expect(data.removeAllIndexes()).resolves.toBeUndefined()
     // The marker belongs to the data directory, not to the indexes: removing every index
-    // does not mean mulat stopped owning the directory it still keeps its config in.
+    // does not mean twigraph stopped owning the directory it still keeps its config in.
     // `deleteDataDirectory` is what removes the marker, and the directory with it.
-    expect(await readdir(dataDir)).toEqual(['.mulat-data'])
+    expect(await readdir(dataDir)).toEqual(['.twigraph-data'])
   })
 })

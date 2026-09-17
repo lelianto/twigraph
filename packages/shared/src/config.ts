@@ -2,7 +2,7 @@ import { readFile, rename, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import type { FolderRecord } from './contracts/stores'
 import { ensureDataDirectory } from './data-dir'
-import { MulatError } from './errors'
+import { TwigraphError } from './errors'
 
 export const CONFIG_VERSION = 1
 
@@ -51,7 +51,7 @@ export interface StorageConfig {
   readonly dataDir?: string
 }
 
-export interface MulatConfig {
+export interface TwigraphConfig {
   readonly version: number
   readonly folders: readonly FolderRecord[]
   readonly offline: boolean
@@ -114,8 +114,8 @@ const DEFAULT_OLLAMA: OllamaConfig = {
   numCtx: 4096,
 }
 
-export function defaultConfig(overrides: ConfigOverrides = {}): MulatConfig {
-  const base: MulatConfig = {
+export function defaultConfig(overrides: ConfigOverrides = {}): TwigraphConfig {
+  const base: TwigraphConfig = {
     version: CONFIG_VERSION,
     folders: overrides.folders ?? [],
     offline: overrides.offline ?? false,
@@ -136,7 +136,7 @@ export function defaultConfig(overrides: ConfigOverrides = {}): MulatConfig {
 }
 
 function fail(path: string, expected: string): never {
-  throw new MulatError('CONFIG_INVALID', `${path} ${expected}`)
+  throw new TwigraphError('CONFIG_INVALID', `${path} ${expected}`)
 }
 
 function asObject(value: unknown, path: string): Record<string, unknown> {
@@ -257,11 +257,11 @@ function parseLlm(value: unknown, fallback: LlmConfig): LlmConfig {
  * mistake rather than silently completed, because a half-specified retrieval config is
  * exactly the kind of thing that produces quietly wrong results.
  */
-export function parseConfig(value: unknown): MulatConfig {
+export function parseConfig(value: unknown): TwigraphConfig {
   const raw = asObject(value, 'config')
 
   if (raw.version !== CONFIG_VERSION) {
-    throw new MulatError(
+    throw new TwigraphError(
       'CONFIG_VERSION_UNSUPPORTED',
       `Unsupported config version: this build understands version ${CONFIG_VERSION}, but the file declares ${JSON.stringify(raw.version)}`,
     )
@@ -290,13 +290,13 @@ function isMissingFile(error: unknown): boolean {
 }
 
 /** A missing config is the normal first-run state, not an error. */
-export async function loadConfig(configPath: string): Promise<MulatConfig> {
+export async function loadConfig(configPath: string): Promise<TwigraphConfig> {
   let raw: string
   try {
     raw = await readFile(configPath, 'utf8')
   } catch (error) {
     if (isMissingFile(error)) return defaultConfig()
-    throw new MulatError('CONFIG_INVALID', 'The mulat config file could not be read', {
+    throw new TwigraphError('CONFIG_INVALID', 'The twigraph config file could not be read', {
       cause: error,
     })
   }
@@ -305,7 +305,7 @@ export async function loadConfig(configPath: string): Promise<MulatConfig> {
   try {
     parsed = JSON.parse(raw)
   } catch (error) {
-    throw new MulatError('CONFIG_INVALID', 'The mulat config file is not valid JSON', {
+    throw new TwigraphError('CONFIG_INVALID', 'The twigraph config file is not valid JSON', {
       cause: error,
     })
   }
@@ -318,10 +318,10 @@ export async function loadConfig(configPath: string): Promise<MulatConfig> {
  *
  * It also brings the data directory into being, marker and all. The first run of a fresh
  * install has no directory yet, and making every caller responsible for creating it means
- * every caller can forget. Writing here is also what claims the directory as mulat's, so
+ * every caller can forget. Writing here is also what claims the directory as twigraph's, so
  * that a later "delete everything" knows what it is allowed to touch.
  */
-export async function saveConfig(configPath: string, config: MulatConfig): Promise<void> {
+export async function saveConfig(configPath: string, config: TwigraphConfig): Promise<void> {
   const temporaryPath = `${configPath}.tmp`
   await ensureDataDirectory(dirname(configPath))
   await writeFile(temporaryPath, `${JSON.stringify(config, null, 2)}\n`, 'utf8')

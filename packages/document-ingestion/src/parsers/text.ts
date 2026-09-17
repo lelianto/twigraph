@@ -1,4 +1,4 @@
-import type { Block, ParsedDocument, ParseInput } from '@mulat/shared'
+import type { Block, ParsedDocument, ParseInput } from '@twigraph/shared'
 
 import type { VersionedParser } from '../parser'
 import { assembleDocument, emptyDocument, firstNonBlankLine, readDocumentText } from './base'

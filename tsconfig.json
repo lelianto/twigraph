@@ -24,11 +24,11 @@
     "types": ["node"],
     "baseUrl": ".",
     "paths": {
-      "@mulat/shared": ["packages/shared/src/index.ts"],
-      "@mulat/document-ingestion": ["packages/document-ingestion/src/index.ts"],
-      "@mulat/indexing": ["packages/indexing/src/index.ts"],
-      "@mulat/retrieval": ["packages/retrieval/src/index.ts"],
-      "@mulat/providers": ["packages/providers/src/index.ts"]
+      "@twigraph/shared": ["packages/shared/src/index.ts"],
+      "@twigraph/document-ingestion": ["packages/document-ingestion/src/index.ts"],
+      "@twigraph/indexing": ["packages/indexing/src/index.ts"],
+      "@twigraph/retrieval": ["packages/retrieval/src/index.ts"],
+      "@twigraph/providers": ["packages/providers/src/index.ts"]
     }
   },
   "include": [

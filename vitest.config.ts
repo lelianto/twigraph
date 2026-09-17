@@ -6,11 +6,11 @@ const resolve = (path: string): string => fileURLToPath(new URL(path, import.met
 export default defineConfig({
   resolve: {
     alias: {
-      '@mulat/shared': resolve('./packages/shared/src/index.ts'),
-      '@mulat/document-ingestion': resolve('./packages/document-ingestion/src/index.ts'),
-      '@mulat/indexing': resolve('./packages/indexing/src/index.ts'),
-      '@mulat/retrieval': resolve('./packages/retrieval/src/index.ts'),
-      '@mulat/providers': resolve('./packages/providers/src/index.ts'),
+      '@twigraph/shared': resolve('./packages/shared/src/index.ts'),
+      '@twigraph/document-ingestion': resolve('./packages/document-ingestion/src/index.ts'),
+      '@twigraph/indexing': resolve('./packages/indexing/src/index.ts'),
+      '@twigraph/retrieval': resolve('./packages/retrieval/src/index.ts'),
+      '@twigraph/providers': resolve('./packages/providers/src/index.ts'),
     },
   },
   test: {

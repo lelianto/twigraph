@@ -1,5 +1,5 @@
 {
-  "name": "@mulat/retrieval",
+  "name": "@twigraph/retrieval",
   "version": "0.2.0",
   "private": true,
   "type": "module",
@@ -10,9 +10,9 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@mulat/shared": "0.1.0"
+    "@twigraph/shared": "0.1.0"
   },
   "devDependencies": {
-    "@mulat/indexing": "0.2.0"
+    "@twigraph/indexing": "0.2.0"
   }
 }

@@ -1,5 +1,5 @@
 {
-  "name": "@mulat/indexing",
+  "name": "@twigraph/indexing",
   "version": "0.2.0",
   "private": true,
   "type": "module",
@@ -10,7 +10,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@mulat/document-ingestion": "0.2.0",
-    "@mulat/shared": "0.1.0"
+    "@twigraph/document-ingestion": "0.2.0",
+    "@twigraph/shared": "0.1.0"
   }
 }

@@ -3,9 +3,9 @@ import { mkdir, mkdtemp, readFile, stat, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 
-import type { ParseInput } from '@mulat/shared'
+import type { ParseInput } from '@twigraph/shared'
 
-export async function makeTempDir(prefix = 'mulat-ingestion-'): Promise<string> {
+export async function makeTempDir(prefix = 'twigraph-ingestion-'): Promise<string> {
   return mkdtemp(join(tmpdir(), prefix))
 }
 

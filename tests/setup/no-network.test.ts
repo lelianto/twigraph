@@ -159,7 +159,7 @@ describe('installNetworkGuard', () => {
   it('leaves unix sockets and named pipes alone', () => {
     guard = installNetworkGuard({ mode: 'offline' })
 
-    const socket = net.connect('\\\\.\\pipe\\mulat-not-a-network')
+    const socket = net.connect('\\\\.\\pipe\\twigraph-not-a-network')
     socket.on('error', () => {})
     socket.destroy()
 
@@ -261,7 +261,7 @@ describe('installNetworkGuard', () => {
   it('leaves a directly connected socket path untouched', () => {
     guard = installNetworkGuard({ mode: 'offline' })
 
-    const socket = new net.Socket().connect('\\\\.\\pipe\\mulat-not-a-network')
+    const socket = new net.Socket().connect('\\\\.\\pipe\\twigraph-not-a-network')
     socket.on('error', () => {})
     socket.destroy()
 

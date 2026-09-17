@@ -1,6 +1,11 @@
-import { createParserRegistry, defaultParsers, scanFolder } from '@mulat/document-ingestion'
-import type { ScanOptions, ScanSkip, ScannedFile, VersionedParser } from '@mulat/document-ingestion'
-import { isMulatError } from '@mulat/shared'
+import { createParserRegistry, defaultParsers, scanFolder } from '@twigraph/document-ingestion'
+import type {
+  ScanOptions,
+  ScanSkip,
+  ScannedFile,
+  VersionedParser,
+} from '@twigraph/document-ingestion'
+import { isTwigraphError } from '@twigraph/shared'
 import type {
   ChunkRecord,
   DocumentFailure,
@@ -8,7 +13,7 @@ import type {
   IndexManifest,
   IndexPayload,
   IndexPhase,
-} from '@mulat/shared'
+} from '@twigraph/shared'
 
 import { chunkDocument, type ChunkingOptions } from './chunk'
 import { documentIdFor } from './ids'
@@ -151,7 +156,7 @@ export async function buildIndex(
         status: 'indexed',
       })
     } catch (error) {
-      const failure = isMulatError(error)
+      const failure = isTwigraphError(error)
         ? { code: error.code, message: error.message }
         : { code: 'INTERNAL' as const, message: 'The document could not be read' }
       failures.push({

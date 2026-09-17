@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto'
 import { readFile, readdir, stat } from 'node:fs/promises'
 import { extname, join, relative, sep } from 'node:path'
 
-import { MulatError } from '@mulat/shared'
+import { TwigraphError } from '@twigraph/shared'
 
 import { normalizeExtension } from './registry'
 
@@ -68,10 +68,10 @@ async function assertDirectory(root: string): Promise<void> {
   try {
     info = await stat(root)
   } catch (error) {
-    throw new MulatError('FOLDER_UNREADABLE', 'The folder could not be read', { cause: error })
+    throw new TwigraphError('FOLDER_UNREADABLE', 'The folder could not be read', { cause: error })
   }
   if (!info.isDirectory()) {
-    throw new MulatError('FOLDER_UNREADABLE', 'The path is not a folder')
+    throw new TwigraphError('FOLDER_UNREADABLE', 'The path is not a folder')
   }
 }
 

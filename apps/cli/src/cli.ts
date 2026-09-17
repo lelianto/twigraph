@@ -1,10 +1,10 @@
 import { stat } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 
-import { buildIndex, createIndexStore } from '@mulat/indexing'
-import { createRetriever, meetsConfidence } from '@mulat/retrieval'
+import { buildIndex, createIndexStore } from '@twigraph/indexing'
+import { createRetriever, meetsConfidence } from '@twigraph/retrieval'
 import {
-  MulatError,
+  TwigraphError,
   PRIVACY_MESSAGE,
   canonicalFolderPath,
   createFolderRegistry,
@@ -12,25 +12,31 @@ import {
   formatCitationLabel,
   loadConfig,
   toWireError,
-} from '@mulat/shared'
-import type { ChunkRecord, Citation, DocumentRecord, FolderRecord, SearchHit } from '@mulat/shared'
+} from '@twigraph/shared'
+import type {
+  ChunkRecord,
+  Citation,
+  DocumentRecord,
+  FolderRecord,
+  SearchHit,
+} from '@twigraph/shared'
 
 import { isOffline, resolveDataDir } from './paths'
 
-const USAGE = `mulat — ask questions about your own files without uploading them anywhere.
+const USAGE = `twigraph — ask questions about your own files without uploading them anywhere.
 
 Usage:
-  mulat folder add <path>        Add a folder to the list
-  mulat folder list              List the folders
-  mulat folder remove <id>       Forget a folder and delete its index
-  mulat index <folder-id>        Read a folder and write its index
-  mulat index --all              Index every folder
-  mulat search "<query>"         Search the indexed folders
-  mulat status                   Show what is indexed and how much space it takes
-  mulat delete <folder-id>       Delete one index, keeping the folder in the list
-  mulat delete --all             Delete every index, the config and any prepared model
-  mulat privacy                  Show where your data is and what can be reached
-  mulat help                     Show this message
+  twigraph folder add <path>        Add a folder to the list
+  twigraph folder list              List the folders
+  twigraph folder remove <id>       Forget a folder and delete its index
+  twigraph index <folder-id>        Read a folder and write its index
+  twigraph index --all              Index every folder
+  twigraph search "<query>"         Search the indexed folders
+  twigraph status                   Show what is indexed and how much space it takes
+  twigraph delete <folder-id>       Delete one index, keeping the folder in the list
+  twigraph delete --all             Delete every index, the config and any prepared model
+  twigraph privacy                  Show where your data is and what can be reached
+  twigraph help                     Show this message
 
 Options:
   --data-dir <path>   Where everything is kept (default: the platform's application data)
@@ -39,8 +45,8 @@ Options:
   --json              Machine readable output
 
 Environment:
-  MULAT_DATA_DIR      Same as --data-dir
-  MULAT_OFFLINE=1     Same as --offline
+  TWIGRAPH_DATA_DIR      Same as --data-dir
+  TWIGRAPH_OFFLINE=1     Same as --offline
 `
 
 export interface CliIo {
@@ -141,7 +147,7 @@ async function folderCommand(context: Context, rest: readonly string[]): Promise
     emit(
       context,
       folders.length === 0
-        ? ['No folders yet. Add one with: mulat folder add <path>']
+        ? ['No folders yet. Add one with: twigraph folder add <path>']
         : folders.map((folder) => `${folder.id}  ${folder.path}`),
       { folders },
     )
@@ -149,25 +155,25 @@ async function folderCommand(context: Context, rest: readonly string[]): Promise
   }
 
   if (action === 'add') {
-    if (argument === undefined) throw new UsageError('usage: mulat folder add <path>')
+    if (argument === undefined) throw new UsageError('usage: twigraph folder add <path>')
     const canonical = canonicalFolderPath(resolve(context.cwd, argument))
 
     const info = await stat(canonical).catch(() => null)
     if (info === null || !info.isDirectory()) {
-      throw new MulatError('FOLDER_UNREADABLE', 'That folder could not be read')
+      throw new TwigraphError('FOLDER_UNREADABLE', 'That folder could not be read')
     }
 
     const record = await registry.add(canonical, context.now())
     emit(
       context,
-      [`Added ${record.path}`, `  id  ${record.id}`, `Index it with: mulat index ${record.id}`],
+      [`Added ${record.path}`, `  id  ${record.id}`, `Index it with: twigraph index ${record.id}`],
       record,
     )
     return 0
   }
 
   if (action === 'remove') {
-    if (argument === undefined) throw new UsageError('usage: mulat folder remove <folder-id>')
+    if (argument === undefined) throw new UsageError('usage: twigraph folder remove <folder-id>')
     await registry.remove(argument)
     // An index nobody can reach is not worth keeping, so it goes with the folder.
     await storeFor(context).store.remove(argument)
@@ -175,7 +181,7 @@ async function folderCommand(context: Context, rest: readonly string[]): Promise
     return 0
   }
 
-  throw new UsageError('usage: mulat folder <add|list|remove>')
+  throw new UsageError('usage: twigraph folder <add|list|remove>')
 }
 
 async function indexCommand(context: Context, rest: readonly string[]): Promise<number> {
@@ -191,13 +197,13 @@ async function indexCommand(context: Context, rest: readonly string[]): Promise<
 
   if (targets.length === 0) {
     if (everything) {
-      context.io.err('Nothing to index. Add a folder first: mulat folder add <path>')
+      context.io.err('Nothing to index. Add a folder first: twigraph folder add <path>')
       return 0
     }
     if (wanted === undefined) {
-      throw new UsageError('usage: mulat index <folder-id> | mulat index --all')
+      throw new UsageError('usage: twigraph index <folder-id> | twigraph index --all')
     }
-    throw new MulatError('FOLDER_NOT_FOUND', 'No folder in the list has that id')
+    throw new TwigraphError('FOLDER_NOT_FOUND', 'No folder in the list has that id')
   }
 
   const config = await loadConfig(context.configPath)
@@ -251,7 +257,7 @@ async function indexCommand(context: Context, rest: readonly string[]): Promise<
 
 async function searchCommand(context: Context, rest: readonly string[]): Promise<number> {
   const query = rest.join(' ').trim()
-  if (query === '') throw new UsageError('usage: mulat search "<query>"')
+  if (query === '') throw new UsageError('usage: twigraph search "<query>"')
 
   const registry = registryFor(context)
   const data = storeFor(context)
@@ -344,7 +350,7 @@ async function statusCommand(context: Context): Promise<number> {
 
 async function deleteCommand(context: Context, rest: readonly string[]): Promise<number> {
   if (context.flags.has('--all')) {
-    // Deletion removes what mulat wrote and nothing else. See `deleteDataDirectory`.
+    // Deletion removes what twigraph wrote and nothing else. See `deleteDataDirectory`.
     const deletion = await deleteDataDirectory(context.dataDir)
 
     if (deletion.removed.length === 0 && !deletion.directoryRemoved) {
@@ -364,7 +370,7 @@ async function deleteCommand(context: Context, rest: readonly string[]): Promise
 
   const folderId = rest[0]
   if (folderId === undefined) {
-    throw new UsageError('usage: mulat delete <folder-id> | mulat delete --all')
+    throw new UsageError('usage: twigraph delete <folder-id> | twigraph delete --all')
   }
 
   await storeFor(context).store.remove(folderId)
@@ -427,7 +433,7 @@ export async function run(argv: readonly string[], io: CliIo): Promise<number> {
     if (group === 'delete') return await deleteCommand(context, rest)
     if (group === 'privacy') return await privacyCommand(context)
 
-    throw new UsageError(`Unknown command: ${group}. Run "mulat help".`)
+    throw new UsageError(`Unknown command: ${group}. Run "twigraph help".`)
   } catch (error) {
     if (error instanceof UsageError) {
       io.err(error.message)

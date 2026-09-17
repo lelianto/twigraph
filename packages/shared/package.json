@@ -1,9 +1,9 @@
 {
-  "name": "@mulat/shared",
+  "name": "@twigraph/shared",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Contracts, configuration and invariants shared by every mulat package.",
+  "description": "Contracts, configuration and invariants shared by every twigraph package.",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {

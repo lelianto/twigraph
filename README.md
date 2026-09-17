@@ -1,7 +1,7 @@
 <div align="center">
-  <img src="assets/mulat-logo.png" alt="mulat logo" width="168" />
+  <img src="assets/twigraph-logo.png" alt="twigraph logo" width="168" />
 
-  # mulat
+  # twigraph
 
   **Ask your files. Keep your files.**
 
@@ -10,10 +10,10 @@
 
 ---
 
-## Why mulat?
+## Why twigraph?
 
 Your private documents should not have to leave your computer before they become useful.
-mulat is being built to index folders you choose, retrieve the most relevant passages,
+twigraph is being built to index folders you choose, retrieve the most relevant passages,
 and answer with citations that lead back to the source.
 
 The project is guided by three promises:
@@ -26,7 +26,7 @@ The project is guided by three promises:
 ## Project status
 
 > [!IMPORTANT]
-> mulat is an early CLI preview, not yet an end-user desktop application.
+> twigraph is an early CLI preview, not yet an end-user desktop application.
 
 A first vertical slice is in place: a local folder can be indexed and searched from the
 command line, end to end. Implemented today:
@@ -91,14 +91,14 @@ model integration must sit behind the same grounding and citation checks.
 ## Try it
 
 Requires Node.js 22.13 or newer. These commands use a synthetic folder, so you can try
-mulat without pointing it at anything of your own.
+twigraph without pointing it at anything of your own.
 
 ```bash
 npm install --include=dev
 npm run fixture:generate          # writes a synthetic folder to fixtures/sample/
-npm run mulat -- folder add fixtures/sample
-npm run mulat -- index --all      # progress goes to stderr, one line per document
-npm run mulat -- search "reciprocal rank fusion"
+npm run twigraph -- folder add fixtures/sample
+npm run twigraph -- index --all      # progress goes to stderr, one line per document
+npm run twigraph -- search "reciprocal rank fusion"
 ```
 
 ```text
@@ -109,37 +109,37 @@ npm run mulat -- search "reciprocal rank fusion"
 ```
 
 ```bash
-npm run mulat -- status                       # what is indexed, and how much room it takes
-npm run mulat -- search "atomic writes" --json
-npm run mulat -- privacy                      # where your data is, and what can be reached
-npm run mulat -- delete --all                 # remove everything mulat has stored
+npm run twigraph -- status                       # what is indexed, and how much room it takes
+npm run twigraph -- search "atomic writes" --json
+npm run twigraph -- privacy                      # where your data is, and what can be reached
+npm run twigraph -- delete --all                 # remove everything twigraph has stored
 ```
 
-`delete --all` removes only mulat's named artifacts: `config.json`, `indexes/`, `models/`,
+`delete --all` removes only twigraph's named artifacts: `config.json`, `indexes/`, `models/`,
 and its marker file. It removes the data directory itself only when nothing else remains,
 and refuses an unmarked directory. The marker is created on the first write, however, so
-do not deliberately point `MULAT_DATA_DIR` at a non-empty personal directory: existing
-entries named `indexes` or `models` would then be treated as mulat artifacts.
+do not deliberately point `TWIGRAPH_DATA_DIR` at a non-empty personal directory: existing
+entries named `indexes` or `models` would then be treated as twigraph artifacts.
 
-Every command accepts `--data-dir <path>`, or `MULAT_DATA_DIR` in the environment. Without
-either, mulat uses the place your platform expects application data to live:
-`%LOCALAPPDATA%\mulat` on Windows, `~/Library/Application Support/mulat` on macOS, and
-`~/.local/share/mulat` on Linux.
+Every command accepts `--data-dir <path>`, or `TWIGRAPH_DATA_DIR` in the environment. Without
+either, twigraph uses the place your platform expects application data to live:
+`%LOCALAPPDATA%\twigraph` on Windows, `~/Library/Application Support/twigraph` on macOS, and
+`~/.local/share/twigraph` on Linux.
 
-`npm run mulat` is a development convenience that runs the CLI from source. A packaged
+`npm run twigraph` is a development convenience that runs the CLI from source. A packaged
 binary is planned alongside the desktop application.
 
 **No command in this build makes a network request at all.** The test suite installs a
 guard that fails the run if one tries, and asserts that a full add-index-search-delete
-cycle leaves zero attempts behind. `MULAT_OFFLINE=1` is recorded and reported, and will be
+cycle leaves zero attempts behind. `TWIGRAPH_OFFLINE=1` is recorded and reported, and will be
 the flag that refuses the optional embedding download once that exists.
 
 ## Verification snapshot
 
 The current vertical slice was last verified with:
 
-- 21 test files;
-- 311 passing tests and 3 opt-in smoke tests skipped by default;
+- 22 test files;
+- 312 passing tests and 3 opt-in smoke tests skipped by default;
 - 94.79% statement, 85.97% branch, 97.76% function, and 95.89% line coverage;
 - a real synthetic-fixture run through add, index, search, status, privacy, and deletion.
 
@@ -172,7 +172,7 @@ Useful commands:
 | --- | --- |
 | `npm run verify` | Run type checking, linting, and the coverage-gated test suite. |
 | `npm run test:watch` | Run the fast TDD feedback loop. |
-| `npm run mulat -- <args>` | Run the CLI from source, e.g. `npm run mulat -- status`. |
+| `npm run twigraph -- <args>` | Run the CLI from source, e.g. `npm run twigraph -- status`. |
 | `npm run fixture:generate` | Rewrite the synthetic fixtures under `fixtures/sample/`. |
 | `npm run format:check` | Check repository formatting without modifying files. |
 | `npm run format` | Format the repository with Prettier. |
@@ -196,7 +196,7 @@ assets/                       Project branding
 
 The project follows strict test-first development. Read [`AGENTS.md`](AGENTS.md) before
 changing production code; it documents the privacy, determinism, testing, and fixture
-rules that keep mulat honest. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) records the
+rules that keep twigraph honest. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) records the
 current storage formats, package boundaries, and explicitly planned components.
 
 ## License

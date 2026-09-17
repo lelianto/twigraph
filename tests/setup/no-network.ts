@@ -1,7 +1,7 @@
 /**
- * mulat network guard.
+ * twigraph network guard.
  *
- * mulat promises that a user's files never leave the device. This module is how
+ * twigraph promises that a user's files never leave the device. This module is how
  * the test suite proves it: install the guard, run the whole pipeline, then assert
  * that nothing reached the network that the current mode does not allow.
  *
@@ -58,7 +58,7 @@ export class NetworkForbiddenError extends Error {
   readonly code = 'NETWORK_FORBIDDEN'
 
   constructor(readonly target: string) {
-    super(`Network access to ${target} is forbidden by the mulat network guard`)
+    super(`Network access to ${target} is forbidden by the twigraph network guard`)
     this.name = 'NetworkForbiddenError'
   }
 }

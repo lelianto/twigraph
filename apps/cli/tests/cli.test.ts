@@ -22,8 +22,8 @@ interface Capture {
 }
 
 beforeEach(async () => {
-  root = await mkdtemp(join(tmpdir(), 'mulat-cli-src-'))
-  dataDir = await mkdtemp(join(tmpdir(), 'mulat-cli-data-'))
+  root = await mkdtemp(join(tmpdir(), 'twigraph-cli-src-'))
+  dataDir = await mkdtemp(join(tmpdir(), 'twigraph-cli-data-'))
   await generateFixtures(root)
 })
 
@@ -63,7 +63,7 @@ describe('help and usage', () => {
   it('prints the usage and succeeds', async () => {
     const result = await cli(['help'])
     expect(result.code).toBe(0)
-    expect(result.lines.join('\n')).toContain('mulat folder add <path>')
+    expect(result.lines.join('\n')).toContain('twigraph folder add <path>')
   })
 
   it('prints the usage when given nothing at all', async () => {
@@ -79,7 +79,7 @@ describe('help and usage', () => {
   it('rejects a search with no query', async () => {
     const result = await cli(['search'])
     expect(result.code).toBe(2)
-    expect(result.errors.join('\n')).toContain('usage: mulat search')
+    expect(result.errors.join('\n')).toContain('usage: twigraph search')
   })
 
   it('rejects a --top that is not a count', async () => {
@@ -258,7 +258,7 @@ describe('deleting', () => {
     const result = await cli(['delete', '--all'], { dataDir: documents })
 
     expect(result.code).toBe(1)
-    expect(result.errors.join('\n')).toContain('not a mulat data directory')
+    expect(result.errors.join('\n')).toContain('not a twigraph data directory')
     expect(existsSync(join(documents, 'notes.txt'))).toBe(true)
     expect(existsSync(join(documents, 'taxes', '2024.txt'))).toBe(true)
   })
@@ -279,17 +279,17 @@ describe('deleting', () => {
   it('claims the data directory on the first write, and only then', async () => {
     const untouched = join(dataDir, 'untouched')
     await cli(['status'], { dataDir: untouched })
-    // Merely reading must not take ownership of a directory mulat was pointed at.
+    // Merely reading must not take ownership of a directory twigraph was pointed at.
     expect(existsSync(untouched)).toBe(false)
 
     await cli(['folder', 'add', root], { dataDir: untouched })
-    expect(existsSync(join(untouched, '.mulat-data'))).toBe(true)
+    expect(existsSync(join(untouched, '.twigraph-data'))).toBe(true)
   })
 
   it('deletes its own files but keeps a file the user put there', async () => {
     const id = await addFolder()
     await cli(['index', id])
-    await writeFile(join(dataDir, 'mine.txt'), 'not mulat\u2019s', 'utf8')
+    await writeFile(join(dataDir, 'mine.txt'), 'not twigraph\u2019s', 'utf8')
 
     const result = await cli(['delete', '--all'])
 
@@ -356,25 +356,25 @@ describe('the whole flow, with no network at all', () => {
 
 describe('data directory resolution', () => {
   it('prefers the explicit path, then the environment, then the platform default', () => {
-    expect(resolveDataDir('/tmp/explicit', { MULAT_DATA_DIR: '/tmp/from-env' })).toContain(
+    expect(resolveDataDir('/tmp/explicit', { TWIGRAPH_DATA_DIR: '/tmp/from-env' })).toContain(
       'explicit',
     )
-    expect(resolveDataDir(undefined, { MULAT_DATA_DIR: '/tmp/from-env' })).toContain('from-env')
+    expect(resolveDataDir(undefined, { TWIGRAPH_DATA_DIR: '/tmp/from-env' })).toContain('from-env')
     expect(resolveDataDir(undefined, {})).toBe(defaultDataDir(process.platform, {}))
   })
 
   it('uses the location each platform expects', () => {
     expect(defaultDataDir('win32', { LOCALAPPDATA: 'C:\\Local' }, 'C:\\Users\\me')).toBe(
-      join('C:\\Local', 'mulat'),
+      join('C:\\Local', 'twigraph'),
     )
     expect(defaultDataDir('darwin', {}, '/Users/me')).toBe(
-      join('/Users/me', 'Library', 'Application Support', 'mulat'),
+      join('/Users/me', 'Library', 'Application Support', 'twigraph'),
     )
     expect(defaultDataDir('linux', { XDG_DATA_HOME: '/xdg' }, '/home/me')).toBe(
-      join('/xdg', 'mulat'),
+      join('/xdg', 'twigraph'),
     )
     expect(defaultDataDir('linux', {}, '/home/me')).toBe(
-      join('/home/me', '.local', 'share', 'mulat'),
+      join('/home/me', '.local', 'share', 'twigraph'),
     )
   })
 })

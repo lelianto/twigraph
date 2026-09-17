@@ -1,9 +1,9 @@
 ---
 name: local-rag
-description: Technical rules for mulat's local RAG pipeline — document parsing, chunking, local embeddings, retrieval, citation tracking, local storage, privacy, and no-network verification. Use when touching packages/document-ingestion, packages/indexing, packages/retrieval, packages/providers, or apps/cli, or when adding a parser, a retrieval strategy, an embedding model, or a language-model provider.
+description: Technical rules for twigraph's local RAG pipeline — document parsing, chunking, local embeddings, retrieval, citation tracking, local storage, privacy, and no-network verification. Use when touching packages/document-ingestion, packages/indexing, packages/retrieval, packages/providers, or apps/cli, or when adding a parser, a retrieval strategy, an embedding model, or a language-model provider.
 ---
 
-# mulat local RAG pipeline
+# twigraph local RAG pipeline
 
 Every rule here exists to protect one of two promises: **the user's files stay on the
 device**, and **an answer is only ever made of retrieved text**.

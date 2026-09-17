@@ -1,23 +1,23 @@
 import { mkdir, readFile, readdir, rmdir, rm, stat, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
-import { MulatError } from './errors'
+import { TwigraphError } from './errors'
 
 /**
  * Ownership of the data directory.
  *
  * The directory can be pointed anywhere by an environment variable, so "delete everything"
  * must never be able to mean "delete whatever the user happened to point us at". The marker
- * is what makes the directory recognisably mulat's: it is written the first time mulat
+ * is what makes the directory recognisably twigraph's: it is written the first time twigraph
  * writes anything, and deletion refuses to touch a directory that does not carry it.
  */
 
-export const DATA_MARKER_FILE = '.mulat-data'
-export const DATA_MARKER_APPLICATION = 'mulat'
+export const DATA_MARKER_FILE = '.twigraph-data'
+export const DATA_MARKER_APPLICATION = 'twigraph'
 export const DATA_MARKER_VERSION = 1
 
 /**
- * Everything mulat creates directly under the data directory.
+ * Everything twigraph creates directly under the data directory.
  *
  * Deletion removes exactly these, and nothing else, so a file the user put there for their
  * own reasons survives. That is the difference between clearing an index and clearing a
@@ -72,16 +72,16 @@ export async function readDataMarker(dataDir: string): Promise<DataMarker | null
   return { application: DATA_MARKER_APPLICATION, schemaVersion: marker.schemaVersion }
 }
 
-export async function isMulatDataDirectory(dataDir: string): Promise<boolean> {
+export async function isTwigraphDataDirectory(dataDir: string): Promise<boolean> {
   return (await readDataMarker(dataDir)) !== null
 }
 
 /**
- * Brings the data directory into being and stamps it as mulat's.
+ * Brings the data directory into being and stamps it as twigraph's.
  *
  * Called from every path that writes into the directory, so the first write is also the
  * one that claims it. Read paths never call it, so running `status` against a directory
- * mulat does not own cannot quietly take ownership of it.
+ * twigraph does not own cannot quietly take ownership of it.
  *
  * A marker that is missing or unreadable is rewritten rather than trusted: the failure
  * mode of a corrupt marker is that deletion refuses to run, and silently repairing a
@@ -89,7 +89,7 @@ export async function isMulatDataDirectory(dataDir: string): Promise<boolean> {
  */
 export async function ensureDataDirectory(dataDir: string): Promise<void> {
   await mkdir(dataDir, { recursive: true })
-  if (await isMulatDataDirectory(dataDir)) return
+  if (await isTwigraphDataDirectory(dataDir)) return
 
   const marker: DataMarker = {
     application: DATA_MARKER_APPLICATION,
@@ -107,11 +107,11 @@ export interface DataDeletion {
 }
 
 /**
- * Deletes what mulat stored, and only what mulat stored.
+ * Deletes what twigraph stored, and only what twigraph stored.
  *
  * Two independent guarantees, because this is irreversible:
  *
- * 1. the directory must carry a valid marker, so a directory mulat never wrote to is
+ * 1. the directory must carry a valid marker, so a directory twigraph never wrote to is
  *    refused outright;
  * 2. only the named artifacts are removed, and the directory itself is removed with
  *    `rmdir`, which fails on a non-empty one. There is no recursive delete on a
@@ -123,15 +123,15 @@ export async function deleteDataDirectory(dataDir: string): Promise<DataDeletion
     return { removed: [], directoryRemoved: false, remaining: [] }
   }
   if (!info.isDirectory()) {
-    throw new MulatError(
+    throw new TwigraphError(
       'INTERNAL',
       'The data directory is not a directory, so nothing was deleted',
     )
   }
-  if (!(await isMulatDataDirectory(dataDir))) {
-    throw new MulatError(
+  if (!(await isTwigraphDataDirectory(dataDir))) {
+    throw new TwigraphError(
       'INTERNAL',
-      'That directory is not a mulat data directory, so nothing was deleted',
+      'That directory is not a twigraph data directory, so nothing was deleted',
       { detail: { dataDir } },
     )
   }

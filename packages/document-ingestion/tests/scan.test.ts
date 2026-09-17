@@ -3,7 +3,7 @@ import { join } from 'node:path'
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
-import { MulatError } from '@mulat/shared'
+import { TwigraphError } from '@twigraph/shared'
 
 import { generateFixtures } from '../../../fixtures/generate.mjs'
 import { createParserRegistry, defaultParsers } from '../src/registry'
@@ -15,7 +15,7 @@ const SUPPORTED = createParserRegistry(defaultParsers()).extensions
 let root = ''
 
 beforeAll(async () => {
-  root = await makeTempDir('mulat-scan-')
+  root = await makeTempDir('twigraph-scan-')
   await generateFixtures(root)
 })
 
@@ -65,7 +65,7 @@ describe('scanning a folder', () => {
   })
 
   it('reports a declined directory once rather than once per file inside it', async () => {
-    const deep = await makeTempDir('mulat-scan-deep-')
+    const deep = await makeTempDir('twigraph-scan-deep-')
     try {
       await writeFixture(deep, 'node_modules/pkg/a/i.md', '# a')
       await writeFixture(deep, 'node_modules/pkg/b/i.md', '# b')
@@ -83,7 +83,7 @@ describe('scanning a folder', () => {
   })
 
   it('reports a hidden file as well as a hidden directory', async () => {
-    const hidden = await makeTempDir('mulat-scan-hidden-')
+    const hidden = await makeTempDir('twigraph-scan-hidden-')
     try {
       await writeFixture(hidden, '.env.txt', 'SECRET=1')
       await writeFixture(hidden, 'visible.md', '# visible')
@@ -143,7 +143,7 @@ describe('scanning a folder', () => {
 
     expect(retrieval?.contentHash).not.toBe(storage?.contentHash)
 
-    const directed = await makeTempDir('mulat-scan-rehash-')
+    const directed = await makeTempDir('twigraph-scan-rehash-')
     try {
       await writeFixture(directed, 'a/x.txt', 'same')
       await writeFixture(directed, 'b/x.txt', 'same')
@@ -164,7 +164,7 @@ describe('scanning a folder', () => {
   })
 
   it('returns an empty result for an empty folder', async () => {
-    const empty = await makeTempDir('mulat-scan-empty-')
+    const empty = await makeTempDir('twigraph-scan-empty-')
     try {
       const result = await scanFolder(empty)
       expect(result.files).toEqual([])
@@ -175,7 +175,7 @@ describe('scanning a folder', () => {
   })
 
   it('reports an unreadable root instead of returning nothing', async () => {
-    await expect(scanFolder(join(root, 'does-not-exist'))).rejects.toBeInstanceOf(MulatError)
+    await expect(scanFolder(join(root, 'does-not-exist'))).rejects.toBeInstanceOf(TwigraphError)
     await expect(scanFolder(join(root, 'does-not-exist'))).rejects.toMatchObject({
       code: 'FOLDER_UNREADABLE',
     })

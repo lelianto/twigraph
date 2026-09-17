@@ -1,4 +1,4 @@
-# mulat architecture
+# twigraph architecture
 
 Two promises shape every decision in this document:
 
@@ -46,15 +46,15 @@ A field that only one parser can fill goes through the block, never into a new c
 One user-visible directory holds everything. The CLI resolves it in this order:
 
 1. `--data-dir <path>`;
-2. `MULAT_DATA_DIR` environment variable;
+2. `TWIGRAPH_DATA_DIR` environment variable;
 3. the platform default:
-   - Windows — `%LOCALAPPDATA%\mulat`
-   - macOS — `~/Library/Application Support/mulat`
-   - Linux — `$XDG_DATA_HOME/mulat`, else `~/.local/share/mulat`
+   - Windows — `%LOCALAPPDATA%\twigraph`
+   - macOS — `~/Library/Application Support/twigraph`
+   - Linux — `$XDG_DATA_HOME/twigraph`, else `~/.local/share/twigraph`
 
 ```
 <dataDir>/
-  .mulat-data                  the marker that proves this directory is mulat's
+  .twigraph-data                  the marker that proves this directory is twigraph's
   config.json                  versioned, validated, atomically written
   indexes/
     <folderId>/
@@ -81,7 +81,7 @@ identical input must produce a byte-identical file.
 `manifest.json` is pretty-printed with two spaces because a human will read it when
 something is wrong.
 
-The manifest is wrapped in an envelope, because `IndexManifest` in `@mulat/shared` is a
+The manifest is wrapped in an envelope, because `IndexManifest` in `@twigraph/shared` is a
 frozen contract that has no `schemaVersion` field and should not grow one:
 
 ```jsonc
@@ -154,29 +154,29 @@ Deletion is a first-class feature, not an afterthought, and every write path has
 removal path:
 
 - delete one folder's index — remove `indexes/<folderId>` and everything under it
-  (`mulat delete <folder-id>`);
+  (`twigraph delete <folder-id>`);
 - forget a folder — remove it from the config *and* delete its index, because an index
-  nobody can reach is not worth keeping (`mulat folder remove <folder-id>`);
-- delete everything — remove what mulat stored: the indexes, the config, any prepared model
-  and the marker (`mulat delete --all`);
+  nobody can reach is not worth keeping (`twigraph folder remove <folder-id>`);
+- delete everything — remove what twigraph stored: the indexes, the config, any prepared model
+  and the marker (`twigraph delete --all`);
 - all three are idempotent: deleting something that is already gone succeeds.
 
-Nothing mulat wrote is left behind afterwards, and a test asserts exactly that by checking
-the directory itself is gone rather than by trusting the code. That holds when mulat's
-artifacts were all there was: a directory still holding something mulat did not create is
+Nothing twigraph wrote is left behind afterwards, and a test asserts exactly that by checking
+the directory itself is gone rather than by trusting the code. That holds when twigraph's
+artifacts were all there was: a directory still holding something twigraph did not create is
 kept, with the user's file untouched.
 
-### Proving the directory is mulat's
+### Proving the directory is twigraph's
 
 The data directory can be pointed anywhere, so "delete everything" must never be able to
-mean "delete whatever the user happened to point us at". `MULAT_DATA_DIR=~/Documents`
+mean "delete whatever the user happened to point us at". `TWIGRAPH_DATA_DIR=~/Documents`
 followed by `delete --all` would otherwise be a data-loss bug waiting for a typo.
 
 Two independent mechanisms, because the operation is irreversible:
 
-1. **A marker.** `.mulat-data` is written the first time mulat writes anything into the
+1. **A marker.** `.twigraph-data` is written the first time twigraph writes anything into the
    directory, and `delete --all` refuses outright unless it finds a valid one. A directory
-   mulat never wrote to is never touched, whatever it holds. Read paths never write the
+   twigraph never wrote to is never touched, whatever it holds. Read paths never write the
    marker, so merely running `status` against a directory cannot take ownership of it.
 2. **Named artifacts only.** Deletion removes `config.json`, `indexes/`, `models/` and the
    marker, then removes the directory with `rmdir`, which fails on a non-empty one. There
@@ -185,16 +185,16 @@ Two independent mechanisms, because the operation is irreversible:
    holding it survives with it.
 
 The second mechanism is what keeps the first from being load-bearing: even a directory that
-somehow carries a marker cannot lose anything mulat did not itself create. Belt and braces,
+somehow carries a marker cannot lose anything twigraph did not itself create. Belt and braces,
 on purpose — this is the one operation in the product that cannot be undone.
 
 The marker is not a substitute for the user's judgement, and it is not a security boundary.
-It is a check against mulat's own mistakes, which is where the risk actually lives.
+It is a check against twigraph's own mistakes, which is where the risk actually lives.
 
 There is one residual ownership caveat: the first write marks its target directory even if
 that directory was already non-empty. Deletion still touches only the four named artifact
 paths, but a pre-existing entry named `indexes` or `models` would be indistinguishable from
-one created by mulat. Users must therefore dedicate `MULAT_DATA_DIR` to mulat. A future
+one created by twigraph. Users must therefore dedicate `TWIGRAPH_DATA_DIR` to twigraph. A future
 hardening step may refuse to claim a non-empty unmarked directory.
 
 ## Chunking
@@ -280,7 +280,7 @@ The only network path the product will have is the one-time download of a local 
 model, and only after the user asks for it. No model means BM25, which needs nothing.
 
 As it stands, **no code path in the product reaches the network at all** — there is no
-embedding download yet, and the CLI's `MULAT_OFFLINE` flag is recorded and reported but has
+embedding download yet, and the CLI's `TWIGRAPH_OFFLINE` flag is recorded and reported but has
 nothing to refuse. Saying that plainly matters more than shipping a flag that looks like a
 guarantee. The enforcement that backs the flag today is the test suite: `build.test.ts` and
 `apps/cli/tests/cli.test.ts` both run a whole index-and-search inside `offline` mode and
@@ -289,7 +289,7 @@ real request in the same run.
 
 Logs carry paths, counts and error codes. They never carry chunk text, document content,
 or anything a user would be unhappy to find in a log file. `toWireError()` drops anything
-that is not a `MulatError`, because an arbitrary `Error.message` can contain a path or a
+that is not a `TwigraphError`, because an arbitrary `Error.message` can contain a path or a
 fragment of a document.
 
 ## Testing
@@ -305,8 +305,8 @@ fragment of a document.
 
 ### Current verified baseline
 
-At the completion of the first CLI vertical slice, `npm run verify` reports 21 test files,
-311 passing tests, 3 opt-in smoke tests skipped by default, and coverage of 94.79%
+At the completion of the first CLI vertical slice and npm packaging work, `npm run verify`
+reports 22 test files, 312 passing tests, 3 opt-in smoke tests skipped by default, and coverage of 94.79%
 statements, 85.97% branches, 97.76% functions, and 95.89% lines. Branch coverage is close
 to the 85% gate, so new branches must arrive with focused tests. These values are a
 snapshot; the command output is authoritative after subsequent changes.

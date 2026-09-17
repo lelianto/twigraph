@@ -9,24 +9,24 @@ import {
   dataMarkerPath,
   deleteDataDirectory,
   ensureDataDirectory,
-  isMulatDataDirectory,
+  isTwigraphDataDirectory,
   readDataMarker,
 } from '../src/data-dir'
-import { MulatError } from '../src/errors'
+import { TwigraphError } from '../src/errors'
 
 let base = ''
 let dataDir = ''
 
 beforeEach(async () => {
-  base = await mkdtemp(join(tmpdir(), 'mulat-datadir-'))
-  dataDir = join(base, 'mulat')
+  base = await mkdtemp(join(tmpdir(), 'twigraph-datadir-'))
+  dataDir = join(base, 'twigraph')
 })
 
 afterEach(async () => {
   await rm(base, { recursive: true, force: true })
 })
 
-/** A directory that looks like something the user cares about, and is not mulat's. */
+/** A directory that looks like something the user cares about, and is not twigraph's. */
 async function documentsLike(): Promise<string> {
   const directory = join(base, 'Documents')
   await mkdir(join(directory, 'taxes'), { recursive: true })
@@ -39,8 +39,8 @@ describe('claiming a directory', () => {
   it('creates the directory and a marker the first time it is needed', async () => {
     await ensureDataDirectory(dataDir)
 
-    expect(await isMulatDataDirectory(dataDir)).toBe(true)
-    expect(await readDataMarker(dataDir)).toEqual({ application: 'mulat', schemaVersion: 1 })
+    expect(await isTwigraphDataDirectory(dataDir)).toBe(true)
+    expect(await readDataMarker(dataDir)).toEqual({ application: 'twigraph', schemaVersion: 1 })
   })
 
   it('writes the marker as readable JSON with a trailing newline', async () => {
@@ -48,7 +48,7 @@ describe('claiming a directory', () => {
     const raw = await readFile(dataMarkerPath(dataDir), 'utf8')
 
     expect(raw.endsWith('\n')).toBe(true)
-    expect(JSON.parse(raw)).toMatchObject({ application: 'mulat' })
+    expect(JSON.parse(raw)).toMatchObject({ application: 'twigraph' })
   })
 
   it('leaves an existing valid marker alone', async () => {
@@ -64,13 +64,13 @@ describe('claiming a directory', () => {
     await writeFile(dataMarkerPath(dataDir), '{ this is not json', 'utf8')
 
     await ensureDataDirectory(dataDir)
-    expect(await isMulatDataDirectory(dataDir)).toBe(true)
+    expect(await isTwigraphDataDirectory(dataDir)).toBe(true)
   })
 
   it('does not claim a directory it was merely pointed at', async () => {
     const documents = await documentsLike()
 
-    expect(await isMulatDataDirectory(documents)).toBe(false)
+    expect(await isTwigraphDataDirectory(documents)).toBe(false)
     expect(await readdir(documents)).toEqual(['notes.txt', 'taxes'])
   })
 })
@@ -90,14 +90,14 @@ describe('reading a marker', () => {
 
   it('reports nothing for a marker with no schema version', async () => {
     await mkdir(dataDir, { recursive: true })
-    await writeFile(dataMarkerPath(dataDir), JSON.stringify({ application: 'mulat' }), 'utf8')
+    await writeFile(dataMarkerPath(dataDir), JSON.stringify({ application: 'twigraph' }), 'utf8')
 
     expect(await readDataMarker(dataDir)).toBeNull()
   })
 
   it('reports nothing for a marker that is not an object', async () => {
     await mkdir(dataDir, { recursive: true })
-    await writeFile(dataMarkerPath(dataDir), '"mulat"', 'utf8')
+    await writeFile(dataMarkerPath(dataDir), '"twigraph"', 'utf8')
 
     expect(await readDataMarker(dataDir)).toBeNull()
   })
@@ -107,11 +107,11 @@ describe('reading a marker', () => {
   })
 })
 
-describe('refusing to delete a directory mulat does not own', () => {
+describe('refusing to delete a directory twigraph does not own', () => {
   it('refuses a folder full of the user\u2019s documents, and leaves all of it intact', async () => {
     const documents = await documentsLike()
 
-    await expect(deleteDataDirectory(documents)).rejects.toBeInstanceOf(MulatError)
+    await expect(deleteDataDirectory(documents)).rejects.toBeInstanceOf(TwigraphError)
     await expect(deleteDataDirectory(documents)).rejects.toMatchObject({ code: 'INTERNAL' })
 
     expect((await readdir(documents)).sort()).toEqual(['notes.txt', 'taxes'])
@@ -131,13 +131,13 @@ describe('refusing to delete a directory mulat does not own', () => {
   it('refuses the repository this test is running in', async () => {
     // A pure read: the check is asserted without ever offering the real repository for
     // deletion, because a test that could delete the working tree is not a test.
-    expect(await isMulatDataDirectory(process.cwd())).toBe(false)
-    expect(await isMulatDataDirectory(homedir())).toBe(false)
-    expect(await isMulatDataDirectory(parse(resolve(process.cwd())).root)).toBe(false)
+    expect(await isTwigraphDataDirectory(process.cwd())).toBe(false)
+    expect(await isTwigraphDataDirectory(homedir())).toBe(false)
+    expect(await isTwigraphDataDirectory(parse(resolve(process.cwd())).root)).toBe(false)
   })
 
   it('refuses a home directory', async () => {
-    expect(await isMulatDataDirectory(homedir())).toBe(false)
+    expect(await isTwigraphDataDirectory(homedir())).toBe(false)
   })
 
   it('refuses a path that is a file rather than a directory', async () => {
@@ -149,7 +149,7 @@ describe('refusing to delete a directory mulat does not own', () => {
   })
 })
 
-describe('deleting a directory mulat does own', () => {
+describe('deleting a directory twigraph does own', () => {
   it('removes its own artifacts and then the directory', async () => {
     await ensureDataDirectory(dataDir)
     await mkdir(join(dataDir, 'indexes'), { recursive: true })
@@ -168,14 +168,14 @@ describe('deleting a directory mulat does own', () => {
   it('keeps a file the user put there, and keeps the directory that holds it', async () => {
     await ensureDataDirectory(dataDir)
     await mkdir(join(dataDir, 'indexes'), { recursive: true })
-    await writeFile(join(dataDir, 'mine.txt'), 'not mulat\u2019s', 'utf8')
+    await writeFile(join(dataDir, 'mine.txt'), 'not twigraph\u2019s', 'utf8')
 
     const deletion = await deleteDataDirectory(dataDir)
 
     expect(deletion.directoryRemoved).toBe(false)
     expect(deletion.remaining).toEqual(['mine.txt'])
     expect(await readdir(dataDir)).toEqual(['mine.txt'])
-    expect(await readFile(join(dataDir, 'mine.txt'), 'utf8')).toBe('not mulat\u2019s')
+    expect(await readFile(join(dataDir, 'mine.txt'), 'utf8')).toBe('not twigraph\u2019s')
   })
 
   it('reports nothing to delete for a directory that is not there', async () => {

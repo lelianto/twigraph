@@ -1,5 +1,5 @@
 /**
- * Local smoke harness: drives every piece of @mulat/shared that exists today against a
+ * Local smoke harness: drives every piece of @twigraph/shared that exists today against a
  * real folder on this machine, with the whole flow inside the `offline` network guard.
  *
  * It reads directory entries and file metadata only. No document content is read, printed
@@ -8,7 +8,7 @@
  * The parts that touch a real folder depend on this machine, so they are opt-in and stay
  * out of the default suite:
  *
- *   $env:MULAT_SMOKE_REAL='1'; npx vitest run tests/smoke --no-coverage
+ *   $env:TWIGRAPH_SMOKE_REAL='1'; npx vitest run tests/smoke --no-coverage
  *
  * The network-guard tests below need no opt-in: they are deterministic and prove the
  * promise on their own.
@@ -34,7 +34,7 @@ import {
   IPC_EVENTS,
   isVerbatimExcerpt,
   loadConfig,
-  MulatError,
+  TwigraphError,
   parseConfig,
   PRIVACY_MESSAGE,
   saveConfig,
@@ -46,11 +46,11 @@ const HOME = homedir()
 const PROJECT_DIR = process.cwd()
 const SCAN_LIMIT = 50_000
 
-const REAL_FOLDER_TESTS = process.env.MULAT_SMOKE_REAL === '1'
+const REAL_FOLDER_TESTS = process.env.TWIGRAPH_SMOKE_REAL === '1'
 const describeReal = describe.skipIf(!REAL_FOLDER_TESTS)
 
 const REAL_FOLDERS: readonly { label: string; path: string }[] = [
-  { label: 'mulat project', path: PROJECT_DIR },
+  { label: 'twigraph project', path: PROJECT_DIR },
   { label: 'Documents', path: join(HOME, 'Documents') },
   { label: 'Desktop', path: join(HOME, 'Desktop') },
 ]
@@ -117,7 +117,7 @@ async function scanFolder(root: string): Promise<FolderScan> {
   return { files, directories, bytes, byExtension, truncated }
 }
 
-const dataDir = await mkdtemp(join(tmpdir(), 'mulat-smoke-'))
+const dataDir = await mkdtemp(join(tmpdir(), 'twigraph-smoke-'))
 const configPath = join(dataDir, 'config.json')
 
 const scans = new Map<string, FolderScan>()
@@ -218,7 +218,7 @@ describe('config against a real data directory', () => {
   })
 
   it('refuses a future config version', () => {
-    expect(() => parseConfig({ version: 2 })).toThrow(MulatError)
+    expect(() => parseConfig({ version: 2 })).toThrow(TwigraphError)
     try {
       parseConfig({ version: 2 })
     } catch (error) {
@@ -227,7 +227,7 @@ describe('config against a real data directory', () => {
   })
 
   it('refuses half a section instead of completing it', () => {
-    expect(() => parseConfig({ version: 1, retrieval: { topK: 5 } })).toThrow(MulatError)
+    expect(() => parseConfig({ version: 1, retrieval: { topK: 5 } })).toThrow(TwigraphError)
   })
 
   it('never lets a disk path ride along with an unexpected error', () => {
@@ -298,17 +298,17 @@ describe('citations and the grounding invariant', () => {
 
   it('blocks an answer that the sources do not support', () => {
     const answer = answerWith('The indexer copies the whole index before every write.', [citation])
-    expect(() => assertGrounded(answer, new Map([[row.id, row.text]]))).toThrow(MulatError)
+    expect(() => assertGrounded(answer, new Map([[row.id, row.text]]))).toThrow(TwigraphError)
   })
 
   it('blocks a citation pointing at a chunk that was never retrieved', () => {
     const answer = answerWith('writes to a staging directory and swaps it in', [citation])
-    expect(() => assertGrounded(answer, new Map())).toThrow(MulatError)
+    expect(() => assertGrounded(answer, new Map())).toThrow(TwigraphError)
   })
 
   it('blocks a marker that has no citation at all', () => {
     const answer = answerWith('writes to a staging directory and swaps it in', [])
-    expect(() => assertGrounded(answer, new Map([[row.id, row.text]]))).toThrow(MulatError)
+    expect(() => assertGrounded(answer, new Map([[row.id, row.text]]))).toThrow(TwigraphError)
   })
 
   it('leaves an insufficient answer alone', () => {

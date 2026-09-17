@@ -1,4 +1,4 @@
-import { MulatError } from '@mulat/shared'
+import { TwigraphError } from '@twigraph/shared'
 
 import type { VersionedParser } from './parser'
 import { createMarkdownParser } from './parsers/markdown'
@@ -32,12 +32,12 @@ export function createParserRegistry(parsers: readonly VersionedParser[] = []): 
 
   const register = (parser: VersionedParser): void => {
     if (byId.has(parser.id)) {
-      throw new MulatError('INTERNAL', `Two parsers claim the id ${parser.id}`)
+      throw new TwigraphError('INTERNAL', `Two parsers claim the id ${parser.id}`)
     }
     for (const extension of parser.extensions) {
       const normalized = normalizeExtension(extension)
       if (byExtension.has(normalized)) {
-        throw new MulatError('INTERNAL', `Two parsers claim the extension ${normalized}`)
+        throw new TwigraphError('INTERNAL', `Two parsers claim the extension ${normalized}`)
       }
     }
     byId.set(parser.id, parser)

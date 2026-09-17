@@ -1,7 +1,7 @@
 /**
  * Determinism helpers.
  *
- * mulat artifacts (manifests, chunk records, answers) must be byte-identical for
+ * twigraph artifacts (manifests, chunk records, answers) must be byte-identical for
  * identical inputs, otherwise the index churns and snapshots become worthless.
  * Production code therefore never reads ambient state — it receives what it needs.
  * These helpers exist for the tests that would otherwise have to fake the clock.

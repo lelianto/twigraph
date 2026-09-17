@@ -64,7 +64,7 @@ export {
   dataMarkerPath,
   deleteDataDirectory,
   ensureDataDirectory,
-  isMulatDataDirectory,
+  isTwigraphDataDirectory,
   readDataMarker,
 } from './data-dir'
 export type { DataDeletion, DataMarker } from './data-dir'
@@ -77,14 +77,14 @@ export type {
   EmbeddingsConfig,
   LlmConfig,
   LlmProviderId,
-  MulatConfig,
+  TwigraphConfig,
   OllamaConfig,
   RetrievalConfig,
   StorageConfig,
 } from './config'
 
-export { isMulatError, MulatError, toWireError } from './errors'
-export type { ErrorCode, ErrorDetail, MulatErrorOptions, WireError } from './errors'
+export { isTwigraphError, TwigraphError, toWireError } from './errors'
+export type { ErrorCode, ErrorDetail, TwigraphErrorOptions, WireError } from './errors'
 
 export { IPC_CHANNELS, IPC_EVENTS, PRIVACY_MESSAGE } from './ipc'
 export type {
@@ -100,7 +100,7 @@ export type {
   IpcOk,
   IpcResult,
   LlmStatus,
-  MulatApi,
+  TwigraphApi,
   PrivacyStatus,
   SettingsPatch,
 } from './ipc'

@@ -1,5 +1,5 @@
 import type { Answer } from './contracts/answer'
-import { MulatError } from './errors'
+import { TwigraphError } from './errors'
 
 export function collapseWhitespace(text: string): string {
   return text.replace(/\s+/g, ' ').trim()
@@ -27,21 +27,21 @@ export function assertGrounded(answer: Answer, chunkTextsById: ReadonlyMap<strin
   if (answer.status !== 'answered') return
 
   if (answer.citations.length === 0) {
-    throw new MulatError('INTERNAL', 'An answered answer must carry citations')
+    throw new TwigraphError('INTERNAL', 'An answered answer must carry citations')
   }
   if (answer.passages.length === 0) {
-    throw new MulatError('INTERNAL', 'An answered answer must carry at least one passage')
+    throw new TwigraphError('INTERNAL', 'An answered answer must carry at least one passage')
   }
 
   for (const passage of answer.passages) {
     if (passage.citationMarkers.length === 0) {
-      throw new MulatError('INTERNAL', 'Every passage needs at least one citation marker')
+      throw new TwigraphError('INTERNAL', 'Every passage needs at least one citation marker')
     }
 
     const cited = passage.citationMarkers.map((marker) => {
       const citation = answer.citations.find((candidate) => candidate.marker === marker)
       if (citation === undefined) {
-        throw new MulatError(
+        throw new TwigraphError(
           'INTERNAL',
           `Passage cites marker [${marker}], which is not in the citation list`,
         )
@@ -52,7 +52,7 @@ export function assertGrounded(answer: Answer, chunkTextsById: ReadonlyMap<strin
     const supported = cited.some((citation) => {
       const text = chunkTextsById.get(citation.chunkId)
       if (text === undefined) {
-        throw new MulatError(
+        throw new TwigraphError(
           'INTERNAL',
           `Chunk ${citation.chunkId} is not among the retrieved chunks`,
         )
@@ -61,7 +61,7 @@ export function assertGrounded(answer: Answer, chunkTextsById: ReadonlyMap<strin
     })
 
     if (!supported) {
-      throw new MulatError(
+      throw new TwigraphError(
         'INTERNAL',
         'A passage must be a verbatim excerpt of one of the chunks it cites',
       )

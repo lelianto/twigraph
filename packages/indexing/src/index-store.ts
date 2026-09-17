@@ -1,14 +1,14 @@
 import { mkdir, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
-import { MulatError, ensureDataDirectory } from '@mulat/shared'
+import { TwigraphError, ensureDataDirectory } from '@twigraph/shared'
 import type {
   ChunkRecord,
   DocumentRecord,
   IndexManifest,
   IndexPayload,
   IndexStore,
-} from '@mulat/shared'
+} from '@twigraph/shared'
 
 import {
   INDEX_SCHEMA_VERSION,
@@ -86,14 +86,14 @@ async function readLines<T>(directory: string, file: string): Promise<readonly T
   try {
     raw = await readFile(join(directory, file), 'utf8')
   } catch (error) {
-    throw new MulatError('INDEX_CORRUPT', 'A file of this index could not be read', {
+    throw new TwigraphError('INDEX_CORRUPT', 'A file of this index could not be read', {
       cause: error,
     })
   }
   try {
     return parseJsonLines<T>(raw)
   } catch (error) {
-    throw new MulatError('INDEX_CORRUPT', 'A file of this index is not valid JSON', {
+    throw new TwigraphError('INDEX_CORRUPT', 'A file of this index is not valid JSON', {
       cause: error,
     })
   }
@@ -143,7 +143,7 @@ export function createIndexStore(options: IndexStoreOptions): DataStore {
           // next successful re-index cleans up whatever is left.
         }
       }
-      throw new MulatError('INDEX_FAILED', 'The new index could not be put in place', {
+      throw new TwigraphError('INDEX_FAILED', 'The new index could not be put in place', {
         cause: error,
       })
     }
@@ -160,30 +160,30 @@ export function createIndexStore(options: IndexStoreOptions): DataStore {
       try {
         raw = await readFile(join(directory, MANIFEST_FILE), 'utf8')
       } catch (error) {
-        throw new MulatError('INDEX_CORRUPT', 'The index has no manifest', { cause: error })
+        throw new TwigraphError('INDEX_CORRUPT', 'The index has no manifest', { cause: error })
       }
 
       let envelope: unknown
       try {
         envelope = JSON.parse(raw)
       } catch (error) {
-        throw new MulatError('INDEX_CORRUPT', 'The index manifest is not valid JSON', {
+        throw new TwigraphError('INDEX_CORRUPT', 'The index manifest is not valid JSON', {
           cause: error,
         })
       }
 
       const schemaVersion = (envelope as { schemaVersion?: unknown }).schemaVersion
       if (schemaVersion !== INDEX_SCHEMA_VERSION) {
-        throw new MulatError(
+        throw new TwigraphError(
           'INDEX_CORRUPT',
-          `This index was written by another version of mulat and cannot be read. Re-index this folder.`,
+          `This index was written by another version of twigraph and cannot be read. Re-index this folder.`,
           { detail: { found: String(schemaVersion), expected: INDEX_SCHEMA_VERSION } },
         )
       }
 
       const manifest = (envelope as { manifest?: IndexManifest }).manifest
       if (manifest === undefined) {
-        throw new MulatError('INDEX_CORRUPT', 'The index manifest is missing its contents')
+        throw new TwigraphError('INDEX_CORRUPT', 'The index manifest is missing its contents')
       }
       return manifest
     },
@@ -221,7 +221,7 @@ export function createIndexStore(options: IndexStoreOptions): DataStore {
         )
       } catch (error) {
         await rm(staging, { recursive: true, force: true })
-        throw new MulatError('INDEX_FAILED', 'The index could not be written', { cause: error })
+        throw new TwigraphError('INDEX_FAILED', 'The index could not be written', { cause: error })
       }
 
       await swap(staging, live, previous)
