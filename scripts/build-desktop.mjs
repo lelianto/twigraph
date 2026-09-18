@@ -75,4 +75,10 @@ await assertNoNodeBuiltins(resolve(rendererDir, 'renderer.js'), 'the renderer')
 
 await copyFile(resolve(rendererSource, 'index.html'), resolve(rendererDir, 'index.html'))
 await copyFile(resolve(rendererSource, 'app.css'), resolve(rendererDir, 'app.css'))
-await copyFile(resolve('assets/twigraph-logo.png'), resolve(outDir, 'logo.png'))
+
+// The same artwork twice: `logo.png` beside the main process for the window icon, and beside the
+// page for the rail's brand mark. The page loads the file rather than carrying a copy of the
+// image inside its bundle, which is the only version that stays in step with the asset.
+const logoSource = resolve('assets/twigraph-logo.png')
+await copyFile(logoSource, resolve(outDir, 'logo.png'))
+await copyFile(logoSource, resolve(rendererDir, 'logo.png'))

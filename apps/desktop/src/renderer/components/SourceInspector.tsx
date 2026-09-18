@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import type { SearchHit } from '@twigraph/shared'
 
 import { hitHeading, hitPageRange } from '../view-model'
+import { PanelToggle } from './PanelToggle'
 
 export interface SelectedSource {
   readonly hit: SearchHit
@@ -14,9 +15,18 @@ export interface SourceInspectorProps {
   readonly onClose: () => void
   readonly onOpen: (absolutePath: string) => void
   readonly onReveal: (absolutePath: string) => void
+  readonly panelOpen: boolean
+  readonly onTogglePanel: () => void
 }
 
-export function SourceInspector({ source, onClose, onOpen, onReveal }: SourceInspectorProps) {
+export function SourceInspector({
+  source,
+  onClose,
+  onOpen,
+  onReveal,
+  panelOpen,
+  onTogglePanel,
+}: SourceInspectorProps) {
   useEffect(() => {
     if (source === null) return
     const closeOnEscape = (event: KeyboardEvent): void => {
@@ -31,19 +41,36 @@ export function SourceInspector({ source, onClose, onOpen, onReveal }: SourceIns
 
   return (
     <aside
+      id="source-inspector"
       className={`pane pane--inspector${source === null ? '' : ' pane--inspector-open'}`}
       aria-labelledby="source-heading"
       data-source-inspector
     >
       <div className="inspector">
         <div className="inspector__head">
-          <div>
+          <div className="inspector__title">
             <span className="pane__eyebrow">Evidence</span>
             <h2 id="source-heading">Selected source</h2>
           </div>
-          <button type="button" className="button button--quiet inspector__close" onClick={onClose}>
-            Close
-          </button>
+          <div className="inspector__controls">
+            {/* The panel's own marker, kept for the minimized spine so both sides read the same. */}
+            <span className="inspector__glyph" aria-hidden="true">
+              [ ]
+            </span>
+            <PanelToggle
+              panel="inspector"
+              controls="source-inspector"
+              open={panelOpen}
+              onToggle={onTogglePanel}
+            />
+            <button
+              type="button"
+              className="button button--quiet inspector__close"
+              onClick={onClose}
+            >
+              Close
+            </button>
+          </div>
         </div>
 
         {source === null ? (

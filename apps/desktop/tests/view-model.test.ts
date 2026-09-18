@@ -10,6 +10,7 @@ import {
   citationLabel,
   describeIndexProgress,
   formatBytes,
+  formatPanelLayout,
   formatScore,
   formatWhen,
   folderName,
@@ -17,6 +18,9 @@ import {
   groupAnswerSources,
   hitHeading,
   hitPageRange,
+  panelShellClass,
+  panelToggleLabel,
+  parsePanelLayout,
   resultStatus,
   workspacePhase,
 } from '../src/renderer/view-model'
@@ -320,5 +324,50 @@ describe('describing an index run', () => {
         currentFile: null,
       }),
     ).toBe('Writing the index — 11 of 11')
+  })
+})
+
+describe('the side panels a person can minimize', () => {
+  it('opens both panels when this window has stored nothing', () => {
+    expect(parsePanelLayout(null)).toEqual({ rail: true, inspector: true })
+  })
+
+  it('treats anything it cannot read as an untouched window', () => {
+    for (const stored of ['', '{', 'null', '"rail"', '[]', '{"rail":"no"}', '{"inspector":1}']) {
+      expect(parsePanelLayout(stored), stored).toEqual({ rail: true, inspector: true })
+    }
+  })
+
+  it('keeps the panel a person minimized closed when the window reopens', () => {
+    expect(parsePanelLayout(formatPanelLayout({ rail: false, inspector: true }))).toEqual({
+      rail: false,
+      inspector: true,
+    })
+    expect(parsePanelLayout('{"rail":false,"inspector":false}')).toEqual({
+      rail: false,
+      inspector: false,
+    })
+  })
+
+  it('writes both panels in a fixed order, so the stored value is stable', () => {
+    expect(formatPanelLayout({ rail: false, inspector: true })).toBe(
+      '{"rail":false,"inspector":true}',
+    )
+  })
+
+  it('marks the shell with a class per minimized panel', () => {
+    expect(panelShellClass({ rail: true, inspector: true })).toBe('app')
+    expect(panelShellClass({ rail: false, inspector: true })).toBe('app app--rail-min')
+    expect(panelShellClass({ rail: true, inspector: false })).toBe('app app--inspector-min')
+    expect(panelShellClass({ rail: false, inspector: false })).toBe(
+      'app app--rail-min app--inspector-min',
+    )
+  })
+
+  it('names each toggle by what using it will do', () => {
+    expect(panelToggleLabel('rail', true)).toBe('Hide folders')
+    expect(panelToggleLabel('rail', false)).toBe('Show folders')
+    expect(panelToggleLabel('inspector', true)).toBe('Hide evidence')
+    expect(panelToggleLabel('inspector', false)).toBe('Show evidence')
   })
 })

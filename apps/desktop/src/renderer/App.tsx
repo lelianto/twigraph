@@ -13,14 +13,30 @@ import { FolderRail } from './components/FolderRail'
 import { SourceInspector } from './components/SourceInspector'
 import type { SelectedSource } from './components/SourceInspector'
 import { StatusBar } from './components/StatusBar'
-import { citationFor, folderName, resultStatus, workspacePhase } from './view-model'
+import {
+  citationFor,
+  folderName,
+  formatPanelLayout,
+  panelShellClass,
+  parsePanelLayout,
+  resultStatus,
+  workspacePhase,
+} from './view-model'
+import type { PanelLayout, SidePanel } from './view-model'
 
 type Mode = 'search' | 'ask'
 type ThemePreference = 'system' | 'light' | 'dark'
 
+const PANEL_LAYOUT_KEY = 'twigraph-panels'
+
 function initialTheme(): ThemePreference {
   const saved = localStorage.getItem('twigraph-theme')
   return saved === 'light' || saved === 'dark' ? saved : 'system'
+}
+
+/** The panels this window was left with, so a minimized one stays minimized after a restart. */
+function initialPanels(): PanelLayout {
+  return parsePanelLayout(localStorage.getItem(PANEL_LAYOUT_KEY))
 }
 
 /** Long enough to notice the counts settle, short enough not to sit on a finished screen. */
@@ -34,6 +50,7 @@ export function App() {
 
   const [mode, setMode] = useState<Mode>('ask')
   const [theme, setTheme] = useState<ThemePreference>(initialTheme)
+  const [panels, setPanels] = useState<PanelLayout>(initialPanels)
   const [query, setQuery] = useState('')
   const [result, setResult] = useState<SearchResult | null>(null)
   const [answer, setAnswer] = useState<Answer | null>(null)
@@ -78,6 +95,10 @@ export function App() {
       localStorage.setItem('twigraph-theme', theme)
     }
   }, [theme])
+
+  useEffect(() => {
+    localStorage.setItem(PANEL_LAYOUT_KEY, formatPanelLayout(panels))
+  }, [panels])
 
   useEffect(() => {
     void refresh()
@@ -244,8 +265,16 @@ export function App() {
     setActiveMarker(null)
   }
 
+  const togglePanel = (panel: SidePanel): void => {
+    setPanels((current) =>
+      panel === 'rail'
+        ? { ...current, rail: !current.rail }
+        : { ...current, inspector: !current.inspector },
+    )
+  }
+
   return (
-    <div className="app">
+    <div className={panelShellClass(panels)}>
       <FolderRail
         folders={folders}
         nowMs={nowMs}
@@ -257,6 +286,8 @@ export function App() {
         onIndex={(folderId) => void startIndex(folderId)}
         onCancel={() => void window.twigraph.index.cancel()}
         onRemove={(folderId) => void removeFolder(folderId)}
+        panelOpen={panels.rail}
+        onTogglePanel={() => togglePanel('rail')}
       />
 
       <main className="pane canvas" aria-busy={busy}>
@@ -428,6 +459,8 @@ export function App() {
 
       <SourceInspector
         source={selected}
+        panelOpen={panels.inspector}
+        onTogglePanel={() => togglePanel('inspector')}
         onClose={closeSource}
         onOpen={(absolutePath) => void openSource(absolutePath)}
         onReveal={(absolutePath) => void revealSource(absolutePath)}

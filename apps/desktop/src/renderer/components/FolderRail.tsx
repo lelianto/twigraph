@@ -3,6 +3,7 @@ import { useState } from 'react'
 import type { FolderSummary } from '@twigraph/shared/ipc'
 
 import { folderName, folderStateLine, formatWhen } from '../view-model'
+import { PanelToggle } from './PanelToggle'
 
 export interface FolderRailProps {
   readonly folders: readonly FolderSummary[]
@@ -15,6 +16,8 @@ export interface FolderRailProps {
   readonly onIndex: (folderId: string) => void
   readonly onCancel: () => void
   readonly onRemove: (folderId: string) => void
+  readonly panelOpen: boolean
+  readonly onTogglePanel: () => void
 }
 
 export function FolderRail({
@@ -28,20 +31,22 @@ export function FolderRail({
   onIndex,
   onCancel,
   onRemove,
+  panelOpen,
+  onTogglePanel,
 }: FolderRailProps) {
   return (
-    <aside className="pane pane--rail" aria-labelledby="folders-heading">
+    <aside id="folder-rail" className="pane pane--rail" aria-labelledby="folders-heading">
       <div className="rail__brand">
-        <svg className="rail__mark" viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            d="M12 3v18M12 9l5-4M12 15l-5-4M12 6l-4-3M12 18l4-3"
-            fill="none"
-            stroke="var(--green)"
-            strokeWidth="1.6"
-            strokeLinecap="round"
-          />
-        </svg>
-        <span>twigraph</span>
+        <span className="rail__identity">
+          <img className="rail__mark" src="logo.png" alt="" width={19} height={19} />
+          <span className="rail__wordmark">twigraph</span>
+        </span>
+        <PanelToggle
+          panel="rail"
+          controls="folder-rail"
+          open={panelOpen}
+          onToggle={onTogglePanel}
+        />
       </div>
 
       <div className="rail__heading">

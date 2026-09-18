@@ -189,6 +189,18 @@ const PROBE = `(async () => {
   const source = document.querySelector('[data-source-inspector]')
   const sourceText = source?.textContent ?? ''
 
+  // The rail's brand mark is a shipped image rather than a drawn glyph, so whether it drew at all
+  // depends on the page's policy letting the file load — a failure no layout measurement sees.
+  // Wait for the load to settle first, or a slow one would be reported as a broken icon.
+  const mark = document.querySelector('.rail__mark')
+  if (mark !== null && !mark.complete) {
+    await new Promise((resolve) => {
+      mark.addEventListener('load', resolve, { once: true })
+      mark.addEventListener('error', resolve, { once: true })
+    })
+  }
+  const brandMark = mark === null ? null : { tag: mark.tagName, naturalWidth: mark.naturalWidth }
+
   const settingsTrigger = [...document.querySelectorAll('.status button')].find((button) =>
     button.textContent?.includes('Settings and privacy'),
   )
@@ -210,6 +222,45 @@ const PROBE = `(async () => {
     text: document.querySelector('.ledger__text')?.textContent ?? null,
   }
 
+  // The side panels, driven last: minimizing them moves the columns every measurement above
+  // describes, and the window is expected to be back in its starting layout when this returns.
+  const widthOf = (selector) => {
+    const element = document.querySelector(selector)
+    return element === null ? -1 : Math.round(element.getBoundingClientRect().width)
+  }
+  const clickToggle = (label) => {
+    document.querySelector('.pane__toggle[aria-label="' + label + '"]')?.click()
+  }
+
+  // This window is hidden, and a hidden Chromium window does not advance transitions: a width
+  // read while one is in flight stays at its starting size for good. The destination is what is
+  // being checked here, so the journey is switched off for the measurement.
+  const noMotion = document.createElement('style')
+  noMotion.textContent = '* { transition: none !important }'
+  document.head.append(noMotion)
+
+  await new Promise((resolve) => setTimeout(resolve, 60))
+  const panelsBefore = { rail: widthOf('.pane--rail'), inspector: widthOf('.pane--inspector') }
+
+  clickToggle('Hide folders')
+  clickToggle('Hide evidence')
+  await new Promise((resolve) => setTimeout(resolve, 400))
+  const railList = document.querySelector('.rail__list')
+  const panelsMinimized = {
+    rail: widthOf('.pane--rail'),
+    inspector: widthOf('.pane--inspector'),
+    foldersHidden: railList !== null && getComputedStyle(railList).display === 'none',
+    labels: [...document.querySelectorAll('.pane__toggle')]
+      .map((button) => button.getAttribute('aria-label'))
+      .sort(),
+  }
+
+  clickToggle('Show folders')
+  clickToggle('Show evidence')
+  await new Promise((resolve) => setTimeout(resolve, 400))
+  const panelsRestored = { rail: widthOf('.pane--rail'), inspector: widthOf('.pane--inspector') }
+  noMotion.remove()
+
   const privacy = await api.privacy.status()
   const folders = await api.folders.list()
 
@@ -222,6 +273,8 @@ const PROBE = `(async () => {
     policyViolations,
     layout,
     ledger,
+    brandMark,
+    panels: { before: panelsBefore, minimized: panelsMinimized, restored: panelsRestored },
     semantics: {
       queryLabel,
       folderSelectorTag: folderSelector?.tagName ?? null,
@@ -327,11 +380,13 @@ app
       const compact = await window.webContents.executeJavaScript(`(() => {
         const inspector = document.querySelector('[data-source-inspector]')
         const rect = inspector?.getBoundingClientRect()
+        const minimize = document.querySelector('.pane--inspector .pane__toggle')
         return {
           viewport: { width: window.innerWidth, height: window.innerHeight },
           columns: getComputedStyle(document.querySelector('.app')).gridTemplateColumns,
           inspectorPosition: inspector === null ? null : getComputedStyle(inspector).position,
           inspectorVisible: rect === undefined ? false : rect.right <= window.innerWidth && rect.left >= 0,
+          inspectorMinimizeHidden: minimize === null ? null : getComputedStyle(minimize).display === 'none',
           documentOverflow: document.documentElement.scrollWidth > window.innerWidth,
         }
       })()`)

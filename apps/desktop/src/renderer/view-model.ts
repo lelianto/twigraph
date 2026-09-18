@@ -216,3 +216,56 @@ export function describeIndexProgress(progress: IndexProgressEvent): string {
     ? `Writing the index — ${counted}`
     : `Reading ${progress.currentFile} — ${counted}`
 }
+
+/**
+ * Which side panels the window is showing.
+ *
+ * Both are open until someone minimizes one, and the choice outlives the window: it is stored in
+ * local storage beside the theme, so the layout a person chose is the layout they come back to.
+ * The state lives on the shell as a class rather than on each pane, so the two panels cannot
+ * disagree about how wide the window thinks they are.
+ */
+export type SidePanel = 'rail' | 'inspector'
+
+export interface PanelLayout {
+  readonly rail: boolean
+  readonly inspector: boolean
+}
+
+const OPEN_BOTH: PanelLayout = { rail: true, inspector: true }
+
+/** Anything but an explicit `false` counts as never minimized. */
+function panelIsOpen(decoded: unknown, panel: SidePanel): boolean {
+  if (typeof decoded !== 'object' || decoded === null) return true
+  return (decoded as Record<string, unknown>)[panel] !== false
+}
+
+export function parsePanelLayout(stored: string | null): PanelLayout {
+  if (stored === null) return OPEN_BOTH
+
+  try {
+    const decoded: unknown = JSON.parse(stored)
+    return { rail: panelIsOpen(decoded, 'rail'), inspector: panelIsOpen(decoded, 'inspector') }
+  } catch {
+    // A note the window cannot read is not a reason to open a window with no panels in it.
+    return OPEN_BOTH
+  }
+}
+
+/** Written in a fixed order, so the same layout always stores the same string. */
+export function formatPanelLayout(layout: PanelLayout): string {
+  return JSON.stringify({ rail: layout.rail, inspector: layout.inspector })
+}
+
+export function panelShellClass(layout: PanelLayout): string {
+  const minimized = [
+    layout.rail ? '' : 'app--rail-min',
+    layout.inspector ? '' : 'app--inspector-min',
+  ].filter((name) => name !== '')
+  return ['app', ...minimized].join(' ')
+}
+
+/** What using a toggle will do, so the button keeps one name as its panel opens and closes. */
+export function panelToggleLabel(panel: SidePanel, open: boolean): string {
+  return `${open ? 'Hide' : 'Show'} ${panel === 'rail' ? 'folders' : 'evidence'}`
+}

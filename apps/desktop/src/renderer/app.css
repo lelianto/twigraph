@@ -130,11 +130,22 @@ p {
 }
 
 .app {
+  /* The shell owns how wide each side panel is, so minimizing one is a single class away and the
+     two panels can never disagree about the space between them. */
+  --rail-width: var(--rail);
+  --inspector-width: var(--inspector);
   display: grid;
-  grid-template-columns: var(--rail) minmax(400px, 1fr) var(--inspector);
+  grid-template-columns: var(--rail-width) minmax(400px, 1fr) var(--inspector-width);
   grid-template-rows: minmax(0, 1fr) 42px;
   height: 100vh;
   background: var(--bg);
+  transition: grid-template-columns 180ms ease-out;
+}
+.app--rail-min {
+  --rail-width: 40px;
+}
+.app--inspector-min {
+  --inspector-width: 40px;
 }
 .pane {
   min-height: 0;
@@ -211,16 +222,62 @@ p {
   min-height: 60px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 9px;
   padding-inline: 16px;
   border-bottom: 1px solid var(--line);
   font-size: 14px;
   font-weight: 700;
 }
+.rail__identity {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
 .rail__mark {
   width: 19px;
   height: 19px;
   flex: none;
+}
+.rail__wordmark {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The one control that closes a side panel, drawn the same way on both sides. */
+.pane__toggle {
+  width: 28px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--muted);
+}
+.pane__toggle:hover {
+  border-color: var(--line-strong);
+  background: rgba(184, 243, 75, 0.04);
+  color: var(--text);
+}
+
+/* A minimized panel keeps its header and drops everything else, so the way back to it is exactly
+   where the way out of it was. */
+.app--rail-min .rail__brand {
+  min-height: 0;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 0;
+}
+.app--rail-min .rail__wordmark,
+.app--rail-min .rail__heading,
+.app--rail-min .rail__list,
+.app--rail-min .rail__foot {
+  display: none;
 }
 .rail__heading {
   display: flex;
@@ -721,6 +778,22 @@ p {
   margin: 0;
   font-size: 14px;
 }
+.inspector__title {
+  min-width: 0;
+}
+.inspector__controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+/* Shown only in the minimized spine, where it stands in for the title it replaces. */
+.inspector__glyph {
+  display: none;
+  min-height: 19px;
+  place-items: center;
+  color: var(--green-soft);
+  font: 550 13px/1 var(--mono);
+}
 .inspector__close {
   display: none;
 }
@@ -988,18 +1061,45 @@ p {
   animation: settle 900ms ease-out 1;
 }
 
+/* Above the compact breakpoint the evidence panel is a real column, so minimizing it leaves a
+   spine. Below it the panel is an overlay that already has its own Close button, where a second
+   way to put it away would be a state a person could get into and not see. */
+@media (min-width: 1081px) {
+  .app--inspector-min .inspector__head {
+    min-height: 0;
+    flex-direction: column;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 0;
+  }
+  .app--inspector-min .inspector__title,
+  .app--inspector-min .inspector__body,
+  .app--inspector-min .inspector__actions,
+  .app--inspector-min .inspector__empty {
+    display: none;
+  }
+  .app--inspector-min .inspector__glyph {
+    display: grid;
+  }
+  /* The same stack as the minimized rail — mark, then control — so the two spines line up. */
+  .app--inspector-min .inspector__controls {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
 @media (max-width: 1080px) {
   :root {
     --rail: 220px;
   }
   .app {
-    grid-template-columns: var(--rail) minmax(0, 1fr);
+    grid-template-columns: var(--rail-width) minmax(0, 1fr);
   }
   .pane--inspector {
     position: fixed;
     z-index: 10;
     inset: 0 0 42px auto;
-    width: min(420px, calc(100vw - var(--rail)));
+    width: min(420px, calc(100vw - var(--rail-width)));
     transform: translateX(100%);
     border-inline-start: 1px solid var(--line-strong);
     box-shadow: -24px 0 70px var(--shadow);
@@ -1010,6 +1110,11 @@ p {
   }
   .inspector__close {
     display: inline-flex;
+  }
+  /* The evidence panel is an overlay here, put away by its own Close button, so minimize would be
+     a control with nothing left to do. The choice is kept for when the window is wide again. */
+  .pane--inspector .pane__toggle {
+    display: none;
   }
   .ask__head span {
     display: none;
@@ -1049,6 +1154,10 @@ p {
   .mode,
   .folder__actions .button {
     min-height: 44px;
+  }
+  .pane__toggle {
+    width: 36px;
+    height: 36px;
   }
   .ledger__marker {
     min-width: 40px;

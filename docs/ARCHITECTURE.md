@@ -330,9 +330,12 @@ Three things are deliberately absent rather than faked:
 The window has no installer and is Windows-only for now. `npm run desktop` builds the three
 bundles and starts it. Its renderer guides the folder, index, query, answer and source-inspection
 states without owning any engine decision. A selected source is a persistent complementary region
-on wide windows and a closable drawer on narrower ones. The page follows the system colour scheme
-by default; an explicit Light or Dark choice is stored only in renderer `localStorage`, not in the
-engine configuration or IPC contract.
+on wide windows and a closable drawer on narrower ones. Either side panel minimizes to a 40px
+spine that keeps the panel's own mark and the button that reopens it, so an answer can take the
+whole width without the way back disappearing; on the narrow layout the evidence drawer is put
+away by its own Close button, so no minimize control is offered there. The page follows the system
+colour scheme by default. An explicit Light or Dark choice and a minimized panel are stored only
+in renderer `localStorage`, not in the engine configuration or IPC contract.
 
 The renderer must reach `shared` through the `@twigraph/shared/ipc` and
 `@twigraph/shared/citations` subpaths: the package root pulls in `config.ts`, which uses

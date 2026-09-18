@@ -96,6 +96,17 @@ describe.skipIf(!ENABLED)('the desktop window, in a real Electron process', () =
         readonly threads: number
         readonly text: string | null
       }
+      readonly brandMark: { readonly tag: string; readonly naturalWidth: number } | null
+      readonly panels: {
+        readonly before: { readonly rail: number; readonly inspector: number }
+        readonly minimized: {
+          readonly rail: number
+          readonly inspector: number
+          readonly foldersHidden: boolean
+          readonly labels: readonly string[]
+        }
+        readonly restored: { readonly rail: number; readonly inspector: number }
+      }
       readonly semantics: {
         readonly queryLabel: string | null
         readonly folderSelectorTag: string | null
@@ -159,6 +170,22 @@ describe.skipIf(!ENABLED)('the desktop window, in a real Electron process', () =
     expect(probe.layout.status?.height).toBeGreaterThanOrEqual(40)
     expect(probe.layout.documentOverflow).toBe(false)
 
+    // The rail shows the shipped logo, and the page's policy let it load: an image the policy
+    // refused would be a broken icon that every measurement above still calls correct.
+    expect(probe.brandMark?.tag).toBe('IMG')
+    expect(probe.brandMark?.naturalWidth).toBeGreaterThan(0)
+
+    // Both side panels minimize to a spine, give their room to the answer, and come back from the
+    // same button — the layout control a person uses rather than reads.
+    expect(probe.panels.before.rail).toBeGreaterThanOrEqual(220)
+    expect(probe.panels.before.inspector).toBeGreaterThanOrEqual(320)
+    expect(probe.panels.minimized.rail).toBeLessThanOrEqual(42)
+    expect(probe.panels.minimized.inspector).toBeLessThanOrEqual(42)
+    expect(probe.panels.minimized.foldersHidden).toBe(true)
+    expect(probe.panels.minimized.labels).toEqual(['Show evidence', 'Show folders'])
+    expect(probe.panels.restored.rail).toBe(probe.panels.before.rail)
+    expect(probe.panels.restored.inspector).toBe(probe.panels.before.inspector)
+
     // The primary controls are semantic and visible without depending on hover.
     expect(probe.semantics.queryLabel).toBe('Ask or search your indexed files')
     expect(probe.semantics.folderSelectorTag).toBe('BUTTON')
@@ -184,11 +211,14 @@ describe.skipIf(!ENABLED)('the desktop window, in a real Electron process', () =
       readonly columns: string
       readonly inspectorPosition: string | null
       readonly inspectorVisible: boolean
+      readonly inspectorMinimizeHidden: boolean | null
       readonly documentOverflow: boolean
     }
     expect(compact.columns.split(' ')).toHaveLength(2)
     expect(compact.inspectorPosition).toBe('fixed')
     expect(compact.inspectorVisible).toBe(true)
+    // The overlay is put away by its Close button, so the minimize control is not offered here.
+    expect(compact.inspectorMinimizeHidden).toBe(true)
     expect(compact.documentOverflow).toBe(false)
 
     // The screenshot is for a person to look at; its existence is what the test can check.
