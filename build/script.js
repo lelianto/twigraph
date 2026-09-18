@@ -10,6 +10,10 @@ const applyTheme = (theme) => {
   currentTheme = theme
   document.documentElement.setAttribute('data-theme', theme)
   localStorage.setItem('twigraph-theme', theme)
+  const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+  if (metaThemeColor) {
+    metaThemeColor.setAttribute('content', theme === 'dark' ? '#090d14' : '#fafafa')
+  }
   themeToggles.forEach((btn) => {
     btn.setAttribute(
       'aria-label',
@@ -77,6 +81,17 @@ document.addEventListener('keydown', (event) => {
 
 navLinks?.querySelectorAll('a').forEach((link) => {
   link.addEventListener('click', () => closeMenu())
+})
+
+document.addEventListener('click', (event) => {
+  if (
+    menuButton?.getAttribute('aria-expanded') === 'true' &&
+    navLinks &&
+    !navLinks.contains(event.target) &&
+    !menuButton.contains(event.target)
+  ) {
+    closeMenu()
+  }
 })
 
 // Parallax floating decorative elements (qwenwork hero-float effect)
