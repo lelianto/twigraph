@@ -20,7 +20,16 @@ function createWindow(): BrowserWindow {
 
   window.once('ready-to-show', () => {
     window.show()
+    window.focus()
   })
+
+  // Guarantee window is visible even if ready-to-show is delayed by the compositor
+  setTimeout(() => {
+    if (!window.isDestroyed() && !window.isVisible()) {
+      window.show()
+      window.focus()
+    }
+  }, 400)
 
   // This window shows one local page and nothing else: no new windows and no navigating away,
   // so a stray link cannot turn the app into a browser.
