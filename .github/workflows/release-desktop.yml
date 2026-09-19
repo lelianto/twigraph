@@ -39,6 +39,13 @@ jobs:
       - name: Install dependencies
         run: npm ci --include=dev
 
+      # Electron 44 has no postinstall: `npm ci` installs the package and deliberately not the
+      # binary, which arrives the first time something requires it. Both the smoke test, which
+      # reads the path file directly, and electron-builder, which is pointed at the installed
+      # distribution, need it to exist before either runs. This is the one place that says so.
+      - name: Download the Electron distribution
+        run: node node_modules/electron/install.js
+
       - name: Check the tag names the desktop app version
         run: node scripts/check-release-version.mjs
         env:

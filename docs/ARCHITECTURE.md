@@ -367,11 +367,12 @@ Two configuration facts are load-bearing rather than cosmetic:
 - `directories.output` is `release/`, not the default. electron-builder empties its output
   directory before it starts, so pointing it at `dist/` would delete the bundles it is about to
   wrap.
-- `electronDist` points at the `node_modules/electron/dist` that `npm ci` already installed, so the
-  build downloads no platform distribution and extracts nothing through a temporary directory that
-  is then renamed into place. That rename is one place a Windows machine can refuse to build for a
-  reason that has nothing to do with the app; `scripts/package-desktop.mjs` reports the other one,
-  a previous build it cannot delete, in a sentence rather than as `EBUSY`.
+- `electronDist` points at `node_modules/electron/dist` rather than letting electron-builder fetch
+  its own copy, which keeps an extract-and-rename of a few thousand files out of the build — the
+  part a Windows machine is most likely to refuse for a reason that has nothing to do with the app.
+  Electron 44 installs no binary in `postinstall`, so that directory is absent after a clean
+  `npm ci`; `scripts/package-desktop.mjs` runs Electron's own installer when it is missing, and the
+  release workflow does the same before the smoke test, which reads the same files.
 
 `deleteAppDataOnUninstall` is `false`. Uninstalling removes the application and leaves the data
 directory and every index in it alone: removing what twigraph stored is `twigraph delete --all`,

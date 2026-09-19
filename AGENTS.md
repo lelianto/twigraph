@@ -55,9 +55,12 @@ implemented behavior.
 | `npm run fixture:generate` | rewrite the synthetic fixtures under `fixtures/sample/` |
 | `npm run format:check` | verify formatting without changing files |
 
-The Electron smoke test is opt-in because it launches a browser engine. It builds nothing itself:
+The Electron smoke test is opt-in because it launches a browser engine. It builds nothing itself,
+but it does read the installed Electron binary, and Electron 44 installs that on demand rather than
+in `postinstall`:
 
 ```powershell
+node node_modules/electron/install.js
 npm run build:desktop
 $env:TWIGRAPH_DESKTOP_SMOKE='1'; npx vitest run apps/desktop/tests/desktop.smoke.test.ts --no-coverage
 ```

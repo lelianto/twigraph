@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process'
 import { existsSync, readdirSync, rmSync, statSync } from 'node:fs'
 import { resolve } from 'node:path'
 
@@ -40,12 +41,38 @@ function clearOutput() {
   }
 }
 
+/**
+ * `electron-builder.yml` points `electronDist` at the Electron that npm installed, which is the
+ * half of the toolchain this script cannot do without. Electron 44 has no `postinstall` on
+ * purpose: it ships `install.js` and fetches the binary the first time something requires the
+ * package, so a clean `npm ci` leaves that directory absent — which is the state every CI runner
+ * starts in. Running the package's own installer is the supported way to fill it in.
+ */
+function ensureElectron() {
+  const electronDir = resolve('node_modules/electron')
+  const distDir = resolve(electronDir, 'dist')
+  if (existsSync(distDir)) return
+
+  const installer = resolve(electronDir, 'install.js')
+  if (!existsSync(installer)) {
+    throw new Error(
+      `no Electron at ${electronDir}: run npm ci --include=dev, which is what installs it`,
+    )
+  }
+
+  const run = spawnSync(process.execPath, [installer], { stdio: 'inherit' })
+  if (run.status !== 0 || !existsSync(distDir)) {
+    throw new Error(`Electron's own installer did not produce ${distDir}`)
+  }
+}
+
 // Dynamic, because the platform check above has to run first: a static import is evaluated
 // before this module's own body, which would build the bundles on a machine that cannot be
 // packaged for anyway. `build-desktop.mjs` is awaited as a module for the side effect that is
 // its whole job.
 await import('./build-desktop.mjs')
 
+ensureElectron()
 clearOutput()
 
 const { build } = await import('electron-builder')

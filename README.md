@@ -209,6 +209,7 @@ make a network request. A smoke test proves that rather than asserting it: it ru
 Electron process, asks the page to make a request, and checks that the request is refused.
 
 ```bash
+node node_modules/electron/install.js   # Electron 44 installs its binary on demand, not in postinstall
 npm run build:desktop
 # then, on Windows:
 $env:TWIGRAPH_DESKTOP_SMOKE='1'; npx vitest run apps/desktop/tests/desktop.smoke.test.ts --no-coverage

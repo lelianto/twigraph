@@ -32,7 +32,15 @@ const DIST = join(REPO, 'apps', 'desktop', 'dist')
 const HARNESS = join(REPO, 'apps', 'desktop', 'tests', 'harness', 'main.cjs')
 const SHOT = join(tmpdir(), 'twigraph-desktop-smoke.png')
 
-/** Electron ships the executable's name in a file rather than exporting a path. */
+/**
+ * Electron ships the executable's name in a file rather than exporting a path.
+ *
+ * This reads that file directly, which is why it can come up empty on a clean checkout: Electron
+ * 44 has no `postinstall` and downloads its binary the first time something requires the package,
+ * so nothing has needed it yet. The build and release paths fill it in with
+ * `node node_modules/electron/install.js`; this is only a test, and it says so rather than
+ * reaching for the network.
+ */
 function electronBinary(): string | null {
   const pathFile = join(REPO, 'node_modules', 'electron', 'path.txt')
   if (!existsSync(pathFile)) return null
@@ -55,7 +63,10 @@ function lineAfter(output: string, prefix: string): unknown {
 describe.skipIf(!ENABLED)('the desktop window, in a real Electron process', () => {
   it('mounts the page, keeps Node out, refuses the network, and reaches the main process', () => {
     const binary = electronBinary()
-    expect(binary, 'run npm install: the Electron binary is missing').not.toBeNull()
+    expect(
+      binary,
+      'the Electron binary is missing: run node node_modules/electron/install.js',
+    ).not.toBeNull()
     expect(existsSync(join(DIST, 'preload.cjs')), 'run npm run build:desktop').toBe(true)
     expect(existsSync(join(DIST, 'renderer', 'index.html')), 'run npm run build:desktop').toBe(true)
 
