@@ -1,0 +1,94 @@
+name: Release desktop app
+
+# The version rule: `version` in apps/desktop/package.json is the desktop app's version, and the
+# tag is `v` followed by it. The step below refuses a tag that disagrees, because an installer
+# carrying a version nobody asked for is not something a reader of the release page can spot.
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: An existing tag to build and attach the artifacts to
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    name: Windows installer and portable zip
+    runs-on: windows-latest
+    steps:
+      - name: Check out the tagged revision
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      # `--include=dev` because a shell that sets NODE_ENV=production would otherwise leave this
+      # job without a test runner or a type checker, and the failure would look like a broken
+      # repository rather than a missing install.
+      - name: Install dependencies
+        run: npm ci --include=dev
+
+      - name: Check the tag names the desktop app version
+        run: node scripts/check-release-version.mjs
+        env:
+          TWIGRAPH_RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+
+      # The project's definition of green, and the gate that has to pass before anything is built.
+      - name: Typecheck, lint, and test with coverage
+        run: npm run verify
+
+      # A real Electron process, driven through a real page. It is the only check that the
+      # renderer's content security policy, the sandboxed preload and the answer ledger still
+      # hold together in the bundle that is about to be wrapped.
+      - name: Drive the window in a real Electron process
+        run: |
+          npm run build:desktop
+          $env:TWIGRAPH_DESKTOP_SMOKE = '1'
+          npx vitest run apps/desktop/tests/desktop.smoke.test.ts --no-coverage
+
+      - name: Package the installer and the portable zip
+        run: npm run package:desktop
+
+      # Runs the packaged application, and reads the archive it just produced rather than
+      # trusting the packaging step to have included the page.
+      - name: Check the packaged build
+        run: |
+          $env:TWIGRAPH_DESKTOP_PACKAGED = '1'
+          npx vitest run apps/desktop/tests/packaged.test.ts --no-coverage
+
+      - name: Write SHA256 checksums
+        run: |
+          $release = (Resolve-Path apps/desktop/release).Path
+          Get-ChildItem -Path $release -File |
+            Where-Object { $_.Extension -in '.exe', '.zip' } |
+            Sort-Object Name |
+            ForEach-Object {
+              $hash = (Get-FileHash -Path $_.FullName -Algorithm SHA256).Hash.ToLower()
+              "$hash  $($_.Name)"
+            } |
+            Set-Content -Path (Join-Path $release 'SHA256SUMS.txt') -Encoding ascii
+
+      # A draft, so the release notes can be edited and the artifacts downloaded and opened
+      # before anyone else can find them. Publishing is a deliberate click, never a side effect
+      # of pushing a tag.
+      - name: Upload a draft release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag || github.ref_name }}
+          draft: true
+          generate_release_notes: true
+          files: |
+            apps/desktop/release/*-setup.exe
+            apps/desktop/release/*.zip
+            apps/desktop/release/SHA256SUMS.txt
