@@ -26,8 +26,9 @@ The project is guided by three promises:
 ## Project status
 
 > [!IMPORTANT]
-> twigraph is an early preview. The engine, the CLI and a Windows desktop window all work
-> today. There is no installer yet, and no macOS or Linux build.
+> twigraph is an early preview. The engine, the CLI and a Windows desktop app all work today,
+> and the desktop app can be downloaded as an installer or a portable zip. There is no macOS or
+> Linux build, and the installer is not code-signed yet.
 
 A first vertical slice is in place: a local folder can be indexed and searched from the
 command line or from a desktop window, end to end. Implemented today:
@@ -55,7 +56,8 @@ Still on the roadmap, and deliberately not claimed yet:
 
 - `.docx` and `.pdf` parsers;
 - local embeddings, hybrid retrieval, and the optional local language model;
-- a packaged Windows installer, and desktop builds for macOS and Linux.
+- desktop builds for macOS and Linux;
+- a code-signed installer, and an update path.
 
 Keeping that distinction explicit is part of the project's commitment to source-grounded
 claims—including claims about itself.
@@ -133,9 +135,37 @@ either, twigraph uses the place your platform expects application data to live:
 `~/.local/share/twigraph` on Linux.
 
 `npm run twigraph` is a development convenience that runs the CLI from source. Packaging the
-CLI as a standalone binary, and the desktop app as an installer, are both still to come.
+CLI as a standalone binary is still to come; the desktop app is packaged, as described below.
 
 ## Desktop app (Windows)
+
+### Download
+
+Every release is built by CI from its tag and attached to the
+[releases page](https://github.com/lelianto/twigraph/releases). The workflow runs the full
+verification suite, drives a real Electron window, and then checks the packaged archive before
+a draft is left for review. Three files are published:
+
+- `twigraph-<version>-x64-setup.exe` — a per-user installer. No administrator prompt: it
+  installs into `%LOCALAPPDATA%\Programs\twigraph` and adds a Start Menu and desktop shortcut.
+- `twigraph-<version>-x64.zip` — the same application as an unpacked folder, for anyone who
+  would rather not install it. Extract it anywhere and run `twigraph.exe`.
+- `SHA256SUMS.txt` — SHA-256 checksums for both, so a download can be verified:
+
+  ```powershell
+  Get-FileHash .\twigraph-0.1.0-x64-setup.exe -Algorithm SHA256
+  ```
+
+Two things worth knowing before you run it:
+
+- **The installer is not code-signed**, so SmartScreen shows "Windows protected your PC" the
+  first time. This is expected until the project has a signing certificate, and it is why the
+  checksums are published: verify the download rather than trusting the warning.
+- **Uninstalling does not delete your data.** The application is removed; `%LOCALAPPDATA%\twigraph`
+  and every index in it are left alone, because deleting what twigraph stored is something you
+  ask for (`twigraph delete --all`) rather than a side effect of removing an application.
+
+### From a checkout
 
 ```bash
 npm run desktop
@@ -164,13 +194,14 @@ What it does today:
 
 What it does not do yet:
 
-- there is no installer. It runs from a checkout, and `npm run desktop` builds and starts it;
-- it is Windows-only;
+- it is Windows-only, and the installer is not code-signed;
 - local embeddings and a local language model are not part of it. The settings panel says
   "not in this build" rather than offering a control that would do nothing, and answers come
   from the extractive engine, which quotes your files;
 - deleting everything twigraph stores is still the CLI's job (`twigraph delete --all`). The
-  window removes a folder together with its index.
+  window removes a folder together with its index, and uninstalling the app removes nothing but
+  the app;
+- there is no update path. A new release is a new download.
 
 The renderer runs sandboxed, with context isolation on, no Node integration, and a
 Content-Security-Policy of `default-src 'none'`. It therefore cannot read the filesystem or
@@ -182,6 +213,19 @@ npm run build:desktop
 # then, on Windows:
 $env:TWIGRAPH_DESKTOP_SMOKE='1'; npx vitest run apps/desktop/tests/desktop.smoke.test.ts --no-coverage
 ```
+
+The packaged build is checked the same way, opt-in, because it needs something packaged to look at:
+
+```bash
+npm run package:desktop
+# then, on Windows:
+$env:TWIGRAPH_DESKTOP_PACKAGED='1'; npx vitest run apps/desktop/tests/packaged.test.ts --no-coverage
+```
+
+That check reads the archive that would be downloaded and asserts it holds the whole bundle and
+nothing from the workspace, then starts the packaged executable. It does not prove the installed
+window renders: opening the installed application is still the step that does, and the release
+workflow leaves a draft precisely so that step happens before anyone else sees it.
 
 ## Local MCP server
 
@@ -213,12 +257,14 @@ the flag that refuses the optional embedding download once that exists.
 
 The current vertical slice was last verified with:
 
-- 34 test files, plus 1 opt-in Electron smoke test file;
-- 450 passing tests, with 4 opt-in smoke tests skipped by default;
+- 37 test files, two of them opt-in: a real Electron window, and the packaged build;
+- 460 passing tests, with 8 opt-in tests skipped by default;
 - 95.74% statement, 86.86% branch, 98.97% function, and 96.66% line coverage;
 - a real synthetic-fixture run through add, index, search, status, privacy, and deletion;
 - a real Electron window run through page mount, a grounded answer, and a refused network
-  request.
+  request;
+- a real packaged build: its archive checked for the page it must contain, and its executable
+  started.
 
 These numbers are a development snapshot, not a compatibility guarantee. `npm run verify`
 is the source of truth for the checkout you are working with.
@@ -252,11 +298,35 @@ Useful commands:
 | `npm run twigraph -- <args>` | Run the CLI from source, e.g. `npm run twigraph -- status`. |
 | `npm run desktop` | Build and start the Windows desktop app from a checkout. |
 | `npm run build:desktop` | Build the desktop main, preload and page bundles. |
+| `npm run package:desktop` | Build, then wrap the bundles in a Windows NSIS installer and a portable zip under `release/`. |
 | `npm run build:mcp` | Build the local stdio MCP server at `dist/mcp.js`. |
 | `npm run twigraph:mcp` | Run the MCP server from source for development. |
 | `npm run fixture:generate` | Rewrite the synthetic fixtures under `fixtures/sample/`. |
 | `npm run format:check` | Check repository formatting without modifying files. |
 | `npm run format` | Format the repository with Prettier. |
+
+### Releasing the desktop app
+
+The version in `apps/desktop/package.json` is the desktop app's version, and it names the
+release tag: set it to `0.2.0` and the tag is `v0.2.0`. The workflow refuses a tag that disagrees
+rather than publishing an installer labelled with a version nobody asked for.
+
+```bash
+# on main, with the version already bumped and committed
+git tag v0.2.0
+git push origin v0.2.0
+```
+
+`.github/workflows/release-desktop.yml` then runs on `windows-latest`: it installs, checks the
+tag against the version, runs `npm run verify`, drives the window in a real Electron process,
+packages the installer and the zip, checks the packaged build, writes `SHA256SUMS.txt`, and
+leaves a **draft** release with all three attached. Nothing is public until that draft is
+published by hand, so the installer can be downloaded and opened first.
+
+The installer is not signed, so anyone running it will meet a SmartScreen warning. Signing is a
+certificate the project does not have yet; `electron-builder` reads `CSC_LINK` and
+`CSC_KEY_PASSWORD` from the environment, so a certificate can be wired up through repository
+secrets later without changing the packaging itself.
 
 ## Repository layout
 
@@ -268,6 +338,7 @@ packages/retrieval/           BM25 ranking, the extractive answer engine
 apps/cli/                     The command line interface
 apps/mcp/                     Read-only local MCP server
 apps/desktop/                 The Windows desktop app: Electron main, preload, and the page
+.github/workflows/            The desktop release pipeline
 docs/                         Architecture notes
 fixtures/                     The synthetic fixture generator
 tests/setup/                  Determinism and no-network safeguards

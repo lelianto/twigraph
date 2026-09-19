@@ -51,6 +51,7 @@ implemented behavior.
 | `npm run twigraph -- <args>` | run the CLI from source, e.g. `npm run twigraph -- status` |
 | `npm run desktop` | build and start the Windows desktop app from a checkout |
 | `npm run build:desktop` | build the desktop main, preload and page bundles |
+| `npm run package:desktop` | build, then wrap the bundles in a Windows NSIS installer and portable zip |
 | `npm run fixture:generate` | rewrite the synthetic fixtures under `fixtures/sample/` |
 | `npm run format:check` | verify formatting without changing files |
 
@@ -60,6 +61,17 @@ The Electron smoke test is opt-in because it launches a browser engine. It build
 npm run build:desktop
 $env:TWIGRAPH_DESKTOP_SMOKE='1'; npx vitest run apps/desktop/tests/desktop.smoke.test.ts --no-coverage
 ```
+
+The packaged-build check is opt-in too, because it needs something packaged to look at. Unlike the
+smoke test it runs the real application rather than a stub main process, so it also builds nothing:
+
+```powershell
+npm run package:desktop
+$env:TWIGRAPH_DESKTOP_PACKAGED='1'; npx vitest run apps/desktop/tests/packaged.test.ts --no-coverage
+```
+
+The desktop app is unsigned, so Windows SmartScreen warns about the installer. `release/` is
+generated output and is ignored by git, eslint and prettier.
 
 If the shell sets `NODE_ENV=production`, npm omits dev dependencies and installs neither the
 test runner nor the type checker. Install with `npm install --include=dev`.

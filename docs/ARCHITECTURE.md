@@ -327,15 +327,69 @@ Three things are deliberately absent rather than faked:
 - the IPC surface has no channel for deleting the whole data directory, so `delete --all` remains
   a CLI operation. Removing a folder removes its index with it, as it does in the CLI.
 
-The window has no installer and is Windows-only for now. `npm run desktop` builds the three
-bundles and starts it. Its renderer guides the folder, index, query, answer and source-inspection
-states without owning any engine decision. A selected source is a persistent complementary region
-on wide windows and a closable drawer on narrower ones. Either side panel minimizes to a 40px
-spine that keeps the panel's own mark and the button that reopens it, so an answer can take the
-whole width without the way back disappearing; on the narrow layout the evidence drawer is put
-away by its own Close button, so no minimize control is offered there. The page follows the system
-colour scheme by default. An explicit Light or Dark choice and a minimized panel are stored only
-in renderer `localStorage`, not in the engine configuration or IPC contract.
+The window is Windows-only for now. `npm run desktop` builds the three bundles and starts it from
+a checkout; `npm run package:desktop` wraps those same bundles for download. Its renderer guides
+the folder, index, query, answer and source-inspection states without owning any engine decision.
+A selected source is a persistent complementary region on wide windows and a closable drawer on
+narrower ones. Either side panel minimizes to a 40px spine that keeps the panel's own mark and the
+button that reopens it, so an answer can take the whole width without the way back disappearing;
+on the narrow layout the evidence drawer is put away by its own Close button, so no minimize
+control is offered there. The page follows the system colour scheme by default. An explicit Light
+or Dark choice and a minimized panel are stored only in renderer `localStorage`, not in the engine
+configuration or IPC contract.
+
+### Packaging
+
+`npm run package:desktop` runs the esbuild step and then wraps its output with electron-builder,
+configured by `apps/desktop/electron-builder.yml`. It produces an NSIS installer and a portable
+zip under `release/`, which git, eslint and prettier ignore.
+
+The step adds no build of its own. What it wraps is the `dist/` directory the esbuild step already
+wrote, and `files` is a whitelist of `dist/**` plus `package.json`, so the asar holds the three
+bundles and the page and nothing else.
+
+Making that whitelist mean what it says took two things, because electron-builder decides what to
+copy by walking the dependency tree rather than by reading `files` alone:
+
+- the three `@twigraph` packages are devDependencies. esbuild folded them into the bundles at build
+  time, and electron-builder copies the `node_modules` of production dependencies into the archive
+  whether or not anything imports them at runtime;
+- `files` ends with `!node_modules/**/*`, because in a workspace that walk continues into the root
+  package.json. Without it the archive carried the MCP server's whole dependency tree — ninety-odd
+  packages, express and ajv among them — into a window that cannot import any of it. Excluding them
+  took the installer from 114 MB to 101 MB.
+
+Two configuration facts are load-bearing rather than cosmetic:
+
+- `appId` has to equal `APP_ID` in `src/main/app-identity.ts`, because NSIS writes the id into the
+  shortcuts and Windows groups the taskbar button by it. `tests/app-identity.test.ts` reads the
+  configuration file and fails when the pair drifts apart — nothing else in the suite would notice.
+- `directories.output` is `release/`, not the default. electron-builder empties its output
+  directory before it starts, so pointing it at `dist/` would delete the bundles it is about to
+  wrap.
+- `electronDist` points at the `node_modules/electron/dist` that `npm ci` already installed, so the
+  build downloads no platform distribution and extracts nothing through a temporary directory that
+  is then renamed into place. That rename is one place a Windows machine can refuse to build for a
+  reason that has nothing to do with the app; `scripts/package-desktop.mjs` reports the other one,
+  a previous build it cannot delete, in a sentence rather than as `EBUSY`.
+
+`deleteAppDataOnUninstall` is `false`. Uninstalling removes the application and leaves the data
+directory and every index in it alone: removing what twigraph stored is `twigraph delete --all`,
+an operation the user asks for, never a side effect of a package manager.
+
+The installer is not code-signed, so Windows SmartScreen warns on first run. `electron-builder`
+reads `CSC_LINK` and `CSC_KEY_PASSWORD` from the environment, so a certificate can be added later
+without changing the packaging. There is no `publish` block and no auto-update metadata:
+`latest.yml` would imply an update path that does not exist, and the release workflow uploads the
+artifacts itself.
+
+The release pipeline is `.github/workflows/release-desktop.yml`. A `v*` tag starts it, the tag has
+to name the version in `apps/desktop/package.json`, and the full verification suite runs before
+anything is built. `apps/desktop/tests/packaged.test.ts` is opt-in and covers what the ordinary
+suite cannot: it reads the asar directory out of the built archive to prove the page shipped, and
+starts the packaged executable. It does not prove the installed window renders — `main.ts` is glue
+that no test in this repository executes, so opening the installed application is still the step
+that does. The release it writes is a draft for exactly that reason.
 
 The renderer must reach `shared` through the `@twigraph/shared/ipc` and
 `@twigraph/shared/citations` subpaths: the package root pulls in `config.ts`, which uses
