@@ -19,6 +19,27 @@ const DIST = process.argv[2]
 const SHOT = process.argv[3]
 const calls = []
 
+/** The window the app opens at, and the window it is asked to shrink to afterwards. */
+const WIDE = { width: 1180, height: 780 }
+const COMPACT = { width: 880, height: 600 }
+
+/**
+ * Make the page as wide as this probe asks for, whatever desktop the window is shown on.
+ *
+ * `new BrowserWindow` clamps to the screen it opens on, and a CI runner's desktop is small:
+ * asked for 1180 wide on a 1024x768 display, the window came back 1008 wide, the page fell into
+ * its narrow layout above which the evidence panel is a column, and a test asserting three
+ * columns failed for a reason that had nothing to do with the page. Setting the bounds after
+ * construction is not clamped the same way, so the width the layout is measured at is the width
+ * asked for here on every machine.
+ *
+ * Emulating the viewport would be the other way to do this, and Electron 44 crashes on
+ * `enableDeviceEmulation` before it paints a frame.
+ */
+function forceViewport(target, size) {
+  target.setBounds({ ...target.getBounds(), width: size.width, height: size.height })
+}
+
 const HIT = {
   chunkId: '6fa170768c2f2b6d:1',
   documentId: '6fa170768c2f2b6d',
@@ -330,8 +351,8 @@ app
     // layout the app actually shows. A hidden window cannot be photographed, which is the only
     // reason the screenshot mode shows it.
     const window = new BrowserWindow({
-      width: 1180,
-      height: 780,
+      width: WIDE.width,
+      height: WIDE.height,
       show: SHOT !== undefined,
       webPreferences: {
         preload: join(DIST, 'preload.cjs'),
@@ -340,6 +361,7 @@ app
         sandbox: true,
       },
     })
+    forceViewport(window, WIDE)
 
     // The single-argument form: passing the legacy (event, level, message) triple warns on
     // Electron 44 and is going away.
@@ -375,7 +397,8 @@ app
       const observed = JSON.parse(await window.webContents.executeJavaScript(PROBE))
       process.stdout.write(`PROBE ${JSON.stringify(observed)}\n`)
 
-      window.setSize(880, 600)
+      window.setSize(COMPACT.width, COMPACT.height)
+      forceViewport(window, COMPACT)
       await new Promise((resolve) => setTimeout(resolve, 150))
       const compact = await window.webContents.executeJavaScript(`(() => {
         const inspector = document.querySelector('[data-source-inspector]')

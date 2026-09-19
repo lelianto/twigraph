@@ -94,6 +94,7 @@ describe.skipIf(!ENABLED)('the desktop window, in a real Electron process', () =
       readonly networkRefused: boolean
       readonly policyViolations: readonly string[]
       readonly layout: {
+        readonly viewport: { readonly width: number; readonly height: number }
         readonly columns: string
         readonly rail: { readonly x: number; readonly width: number } | null
         readonly canvas: { readonly x: number; readonly width: number } | null
@@ -167,7 +168,11 @@ describe.skipIf(!ENABLED)('the desktop window, in a real Electron process', () =
     expect(calls).toContain('settings:get')
     expect(calls).toContain('ask:question')
 
-    // Wide mode keeps the working field between a folder navigator and the evidence inspector.
+    // Wide mode keeps the working field between a folder navigator and the evidence inspector,
+    // and the page switches to it above 1080px. Asserting the width first matters: a runner whose
+    // desktop is smaller than the window the probe asked for used to clamp it, and the failure
+    // that surfaced was a missing third column — a layout bug that was not one.
+    expect(probe.layout.viewport.width).toBeGreaterThanOrEqual(1081)
     expect(probe.layout.columns.split(' ')).toHaveLength(3)
     expect(probe.layout.rail?.width).toBeGreaterThanOrEqual(220)
     expect(probe.layout.canvas?.width).toBeGreaterThanOrEqual(400)
