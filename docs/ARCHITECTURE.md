@@ -386,9 +386,17 @@ artifacts itself.
 
 The release pipeline is `.github/workflows/release-desktop.yml`. A `v*` tag starts it, the tag has
 to name the version in `apps/desktop/package.json`, and the full verification suite runs before
-anything is built. `apps/desktop/tests/packaged.test.ts` is opt-in and covers what the ordinary
-suite cannot: it reads the asar directory out of the built archive to prove the page shipped, and
-starts the packaged executable. It does not prove the installed window renders — `main.ts` is glue
+anything is built.
+
+The window smoke test runs there too, as an advisory step rather than a gate. It is the one check
+whose result depends on the machine rather than on the code — the desktop it is handed, whether a
+compositor produces a frame, how a synthetic click lands on a panel in that particular window — and
+it has failed on a runner with nothing wrong in the app. What gates the installer is
+`npm run package:desktop` followed by the packaged check below.
+
+`apps/desktop/tests/packaged.test.ts` is opt-in and covers what the ordinary suite cannot: it reads
+the asar directory out of the built archive to prove the page shipped, and starts the packaged
+executable. It does not prove the installed window renders — `main.ts` is glue
 that no test in this repository executes, so opening the installed application is still the step
 that does. The release it writes is a draft for exactly that reason.
 

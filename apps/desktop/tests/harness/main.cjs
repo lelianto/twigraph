@@ -335,6 +335,24 @@ async function driveOneAsk(window) {
   await new Promise((resolve) => setTimeout(resolve, 150))
 }
 
+/**
+ * A frame of the window, or null if the compositor would not give one.
+ *
+ * The first attempt is the one that fails: `capturePage` rejects with `UnknownVizError` when the
+ * window has been shown but not yet painted. Waiting between attempts is what the retries are
+ * for, so they are spaced rather than immediate.
+ */
+async function captureWithRetry(window) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      return await window.webContents.capturePage()
+    } catch {
+      await new Promise((resolve) => setTimeout(resolve, 400))
+    }
+  }
+  return null
+}
+
 // Chromium keeps its disk cache under `userData`. A development copy of the app may be running
 // against that same default path, and two instances sharing one cache is what produces
 // "Access is denied" and a renderer that cannot be driven, so the test hands this one its own.
@@ -387,10 +405,19 @@ app
       if (SHOT !== undefined) {
         process.stdout.write('STAGE drive\n')
         await driveOneAsk(window)
-        process.stdout.write('STAGE capture\n')
-        const image = await window.webContents.capturePage()
-        await writeFile(SHOT, image.toPNG())
-        process.stdout.write(`SHOT ${SHOT}\n`)
+
+        // Best effort. Capturing a frame fails intermittently — `UnknownVizError`, when the
+        // compositor has not produced one for a window that has only just been shown — and a
+        // picture for a person to look at is not worth failing a release run over. The probe
+        // below still runs either way, and says whether a picture was taken.
+        const image = await captureWithRetry(window)
+        if (image === null) {
+          process.stdout.write('SHOTSKIPPED the compositor produced no frame\n')
+        } else {
+          process.stdout.write('STAGE capture\n')
+          await writeFile(SHOT, image.toPNG())
+          process.stdout.write(`SHOT ${SHOT}\n`)
+        }
       }
 
       process.stdout.write('STAGE probe\n')
