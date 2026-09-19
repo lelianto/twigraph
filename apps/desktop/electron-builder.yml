@@ -1,0 +1,86 @@
+# The desktop app as something a person downloads rather than checks out.
+#
+# `scripts/package-desktop.mjs` runs this after `scripts/build-desktop.mjs`, so by the time
+# electron-builder looks at `dist/` the three bundles are already there. Nothing here builds
+# anything: it wraps what the esbuild step produced.
+#
+# `appId` is not decoration. NSIS writes it into the Start Menu and desktop shortcuts, and
+# `APP_ID` in `src/main/app-identity.ts` has to carry the same value or a pinned shortcut grows
+# a second, ungrouped taskbar icon. `tests/app-identity.test.ts` fails if they drift apart.
+#
+# This file depends on `electron` being pinned to an exact version in package.json, with no `^`.
+# A workspace hoists it to the root `node_modules`, so electron-builder cannot read the installed
+# release to resolve a range and refuses to guess which binaries to download. Pinning is also the
+# right answer for its own sake: the browser engine should move when someone decides to move it.
+
+appId: dev.twigraph.desktop
+
+# `name` in package.json is `@twigraph/desktop`, which electron-builder would otherwise turn
+# into an executable called `@twigraph/desktop.exe`.
+productName: twigraph
+executableName: twigraph
+
+directories:
+  # Relative to this file's directory. The output must not be `dist/`: that is where the
+  # bundles live, and electron-builder empties its output directory before it starts.
+  output: release
+  # The default is `build/` next to this file. The repository already has a `build/` at its
+  # root holding the committed landing page, and pointing resources there would mix the two.
+  buildResources: ../../assets
+
+files:
+  - dist/**/*
+  - package.json
+  # Not an optimisation. The desktop app's bundles are self-contained, so nothing in
+  # node_modules is loaded at runtime — but electron-builder works out what to copy by walking
+  # the dependency tree, and in a workspace it walks the root's too. Without this the asar picks
+  # up the MCP server's whole tree (express, ajv and eighty-odd more) into a window that cannot
+  # import any of it.
+  - '!node_modules/**/*'
+
+# The page and the preload are read from inside the archive.
+asar: true
+
+win:
+  # electron-builder converts this to an .ico itself: the source is 1254x1254, well past the
+  # 256x256 it requires, so there is no second icon file to keep in step with the artwork.
+  icon: ../../assets/twigraph-logo.png
+  target:
+    - target: nsis
+      arch:
+        - x64
+    - target: zip
+      arch:
+        - x64
+  artifactName: twigraph-${version}-${arch}.${ext}
+
+nsis:
+  # A wizard rather than a one-click install, because choosing where an application goes is a
+  # reasonable thing to want from an application that never talks to the network.
+  oneClick: false
+  # Per-user, into %LOCALAPPDATA%\Programs\twigraph: no elevation prompt for an app that only
+  # ever reads the folders its user picked.
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: twigraph
+  # Stated rather than left to the default, because it is a decision: uninstalling removes the
+  # application and not the user's indexes. Deleting what twigraph stored is `twigraph delete
+  # --all`, an operation the user asks for, never a side effect of a package manager.
+  deleteAppDataOnUninstall: false
+  artifactName: twigraph-${version}-${arch}-setup.${ext}
+  # There is no update path, so a block map would be a file nobody can use.
+  differentialPackage: false
+
+# No `publish` block on purpose. The release workflow uploads the files itself, so there is no
+# latest.yml and no implication of an auto-update path that does not exist yet.
+
+# Electron-builder's default is to download the platform distribution, extract it into a
+# temporary directory and rename that directory into place. Pointing at the copy `npm ci` already
+# installed skips the download and uses exactly the binary the development window runs, because
+# `electron` is pinned. It also keeps an extract-and-rename of a few thousand files out of the
+# build, which is the part Windows is most likely to refuse when something else is watching the
+# checkout. The remaining case — a previous build that cannot be deleted — is reported by
+# `scripts/package-desktop.mjs` rather than surfacing as a bare EBUSY.
+electronDist: ../../node_modules/electron/dist

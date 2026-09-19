@@ -4,15 +4,15 @@
   "private": true,
   "type": "module",
   "description": "The twigraph desktop application: a local window over the same index the CLI builds.",
-  "dependencies": {
+  "author": "lelianto",
+  "main": "dist/main.cjs",
+  "devDependencies": {
     "@twigraph/indexing": "0.2.0",
     "@twigraph/retrieval": "0.2.0",
-    "@twigraph/shared": "0.1.0"
-  },
-  "devDependencies": {
+    "@twigraph/shared": "0.1.0",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
-    "electron": "^44.4.1",
+    "electron": "44.4.1",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
   }

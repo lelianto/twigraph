@@ -3,6 +3,9 @@ dist/
 coverage/
 *.tsbuildinfo
 
+# The installers and zips `npm run package:desktop` writes.
+release/
+
 # OS noise
 .DS_Store
 Thumbs.db

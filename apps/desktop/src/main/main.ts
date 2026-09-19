@@ -5,6 +5,7 @@ import { BrowserWindow, Menu, app, ipcMain, session } from 'electron'
 import { createIndexStore } from '@twigraph/indexing'
 import { createFolderRegistry } from '@twigraph/shared'
 
+import { APP_ID } from './app-identity'
 import { registerIpc } from './ipc'
 import { createPlatform, resolveDesktopPaths } from './platform'
 import { createDesktopService } from './service'
@@ -99,6 +100,10 @@ if (!app.requestSingleInstanceLock()) {
   app
     .whenReady()
     .then(() => {
+      // Before any window exists, and matching what the installer wrote into the shortcut that
+      // started this process: Windows groups a taskbar button by this id, so a window without it
+      // is a second button rather than the one the user pinned.
+      app.setAppUserModelId(APP_ID)
       denyEveryPermission()
       start()
     })
